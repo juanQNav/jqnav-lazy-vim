@@ -1,5 +1,5 @@
 return {
-  -- snacks.nvim (tu configuración actual del dashboard)
+  -- snacks.nvim (dashboard)
   {
     "folke/snacks.nvim",
     opts = {
@@ -51,14 +51,14 @@ return {
     },
   },
 
-  -- lualine.nvim (barra de estado)
+  -- lualine.nvim (state bar)
   {
     "nvim-lualine/lualine.nvim",
     event = "VeryLazy",
     requires = { "nvim-tree/nvim-web-devicons", opt = true },
     opts = {
       options = {
-        theme = "auto", -- Puedes cambiarlo a "kanagawa" u otro si prefieres
+        theme = "auto", -- you can cange
         icons_enabled = true,
         section_separators = { left = "", right = "" },
         component_separators = { left = "", right = "" },
@@ -74,7 +74,7 @@ return {
     },
   },
 
-  -- incline.nvim (nombre de archivo en ventana flotante superior)
+  -- incline.nvim (overlay window)
   {
     "b0o/incline.nvim",
     event = "BufReadPre",
@@ -93,5 +93,16 @@ return {
         end,
       })
     end,
+  },
+
+  -- deactivate cmdline noice.nvim (use cdmline default)
+  {
+    "folke/noice.nvim",
+    opts = {
+      cmdline = {
+        view = "cmdline",
+      },
+      --presetesets = { command_palette = true }, -- tab copletations for commandline don't pop-up at top
+    },
   },
 }
