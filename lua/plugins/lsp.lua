@@ -112,15 +112,22 @@ return {
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("kickstart-lsp-attach", { clear = true }),
         callback = function(event)
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
+          assert(client, "LSP client not found")
+
+          -- Deactivate formatting from lsp (conform/prettier will do it)
+          if client.name == "tsserver" or client.name == "ts_ls" then
+            client.server_capabilities.documentFormattingProvider = false
+            client.server_capabilities.documentRangeFormattingProvider = false
+          end
+
+          -- keymaps LSP
           local function map(keys, func, desc)
             vim.keymap.set("n", keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
           end
 
-          local client = vim.lsp.get_client_by_id(event.data.client_id)
-          assert(client, "LSP client not found")
-
-          ---@diagnostic disable-next-line: inject-field
-          client.server_capabilities.document_formatting = true
+          -- ---@diagnostic disable-next-line: inject-field
+          --  client.server_capabilities.document_formatting = true
 
           map("gd", vim.lsp.buf.definition, "[g]o to [d]efinition")
           map("gD", vim.lsp.buf.type_definition, "[g]o to type [D]efinition")
