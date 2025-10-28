@@ -39,24 +39,68 @@ local function format_long_lines()
       if line:match("^%s*|") then
         in_table = true
       elseif in_table and line:match("^%s*$") then
-        -- Empty line → end of the table
         in_table = false
       end
 
-      -- Skip special blocks: code fences, headings, lists, tables
+      -- Skip special blocks: code fences, headings, tables
       if
         line:match("^```")
         or line:match("^#+%s")
-        or line:match("^%s*[*+-]%s")
-        or line:match("^%s*%d+%.%s")
         or in_table
+        or line:match("%b[]%b()") -- Skip lines containing Markdown links
       then
         table.insert(new_lines, line)
-      elseif line:match("%b[]%b()") then
-        -- Skip lines containing Markdown links
-        table.insert(new_lines, line)
+
+      -- Handle unordered lists (preserve bullet and indent)
+      elseif line:match("^%s*[*+-]%s") then
+        local indent, bullet, content = line:match("^(%s*)([%*%-+])%s(.+)$")
+        if content then
+          local remaining = content
+          local max_width = 80 - #indent - 2
+          while #remaining > max_width do
+            local cut_pos = max_width
+            for i = max_width, 1, -1 do
+              if remaining:sub(i, i) == " " then
+                cut_pos = i
+                break
+              end
+            end
+            table.insert(new_lines, indent .. bullet .. " " .. remaining:sub(1, cut_pos))
+            remaining = remaining:sub(cut_pos + 1):gsub("^%s+", "")
+          end
+          if remaining ~= "" then
+            table.insert(new_lines, indent .. bullet .. " " .. remaining)
+          end
+        else
+          table.insert(new_lines, line)
+        end
+
+      -- Handle ordered lists (numbers)
+      elseif line:match("^%s*%d+%.%s") then
+        local indent, num, content = line:match("^(%s*)(%d+%.%s)(.+)$")
+        if content then
+          local remaining = content
+          local max_width = 80 - #indent - #num
+          while #remaining > max_width do
+            local cut_pos = max_width
+            for i = max_width, 1, -1 do
+              if remaining:sub(i, i) == " " then
+                cut_pos = i
+                break
+              end
+            end
+            table.insert(new_lines, indent .. num .. remaining:sub(1, cut_pos))
+            remaining = remaining:sub(cut_pos + 1):gsub("^%s+", "")
+          end
+          if remaining ~= "" then
+            table.insert(new_lines, indent .. num .. remaining)
+          end
+        else
+          table.insert(new_lines, line)
+        end
+
+      -- Handle normal long lines
       elseif #line > 80 then
-        -- Split long lines while keeping word boundaries
         local remaining = line
         while #remaining > 80 do
           local cut_pos = 80
