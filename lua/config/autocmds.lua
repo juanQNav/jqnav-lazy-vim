@@ -7,7 +7,7 @@
 -- Or remove existing autocmds by their group name (which is prefixed with `lazyvim_` for the defaults)
 -- e.g. vim.api.nvim_del_augroup_by_name("lazyvim_wrap_spell")
 
--- Autocomando para archivos Markdown
+-- Autocommand for Markdown files
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
   callback = function()
@@ -17,54 +17,75 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- Función para formatear líneas largas manualmente
 local function format_long_lines()
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
   local new_lines = {}
+  local in_table = false
+  local skip_format = false
 
   for _, line in ipairs(lines) do
-    -- Skip code blocks, headers, and lists (but not bold text)
-    if line:match("^```") or line:match("^#+%s") or line:match("^%s*[*+-]%s") or line:match("^%s*%d+%.%s") then
+    -- Detect format control tags
+    if line:match("<!--%s*format:off%s*-->") then
+      skip_format = true
       table.insert(new_lines, line)
-    elseif #line > 80 then
-      -- Mejorado: dividir líneas largas respetando espacios y formato
-      local remaining = line
-
-      while #remaining > 80 do
-        local cut_pos = 80
-        -- Buscar el último espacio antes del límite de 80 caracteres
-        for i = 80, 1, -1 do
-          if remaining:sub(i, i) == " " then
-            cut_pos = i - 1
-            break
-          end
-        end
-
-        -- Si no encontramos espacio, cortar en 80
-        if cut_pos == 80 and remaining:sub(80, 80) ~= " " then
-          cut_pos = 79
-        end
-
-        local current_part = remaining:sub(1, cut_pos)
-        table.insert(new_lines, current_part)
-
-        -- Preparar el resto de la línea, eliminando espacios al inicio
-        remaining = remaining:sub(cut_pos + 1):gsub("^%s+", "")
-      end
-
-      -- Agregar lo que queda si no está vacío
-      if remaining:gsub("^%s+", "") ~= "" then
-        table.insert(new_lines, remaining)
-      end
+    elseif line:match("<!--%s*format:on%s*-->") then
+      skip_format = false
+      table.insert(new_lines, line)
+    elseif skip_format then
+      -- Inside a format:off block → skip formatting
+      table.insert(new_lines, line)
     else
-      table.insert(new_lines, line)
+      -- Detect if we are inside a Markdown table
+      if line:match("^%s*|") then
+        in_table = true
+      elseif in_table and line:match("^%s*$") then
+        -- Empty line → end of the table
+        in_table = false
+      end
+
+      -- Skip special blocks: code fences, headings, lists, tables
+      if
+        line:match("^```")
+        or line:match("^#+%s")
+        or line:match("^%s*[*+-]%s")
+        or line:match("^%s*%d+%.%s")
+        or in_table
+      then
+        table.insert(new_lines, line)
+      elseif line:match("%b[]%b()") then
+        -- Skip lines containing Markdown links
+        table.insert(new_lines, line)
+      elseif #line > 80 then
+        -- Split long lines while keeping word boundaries
+        local remaining = line
+        while #remaining > 80 do
+          local cut_pos = 80
+          for i = 80, 1, -1 do
+            if remaining:sub(i, i) == " " then
+              cut_pos = i - 1
+              break
+            end
+          end
+          if cut_pos == 80 and remaining:sub(80, 80) ~= " " then
+            cut_pos = 79
+          end
+          local current_part = remaining:sub(1, cut_pos)
+          table.insert(new_lines, current_part)
+          remaining = remaining:sub(cut_pos + 1):gsub("^%s+", "")
+        end
+        if remaining:gsub("^%s+", "") ~= "" then
+          table.insert(new_lines, remaining)
+        end
+      else
+        table.insert(new_lines, line)
+      end
     end
   end
 
   vim.api.nvim_buf_set_lines(0, 0, -1, false, new_lines)
 end
 
--- Autoformatear al guardar
+-- Autoformat on save
 vim.api.nvim_create_autocmd("BufWritePre", {
   pattern = "*.md",
   callback = function()
