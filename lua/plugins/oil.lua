@@ -4,7 +4,7 @@ return {
   ---@type oil.SetupOpts
   opts = {},
   dependencies = {
-    { "echasnovski/mini.icons", opts = {} },
+    { "nvim-mini/mini.icons", opts = {} },
   },
   keys = { { "-", "<CMD>Oil<CR>", desc = "Open parent directory", mode = "n" } },
   config = function()
