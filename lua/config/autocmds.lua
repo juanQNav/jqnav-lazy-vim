@@ -97,6 +97,8 @@ local function format_long_lines()
         if content then
           local remaining = content
           local list_max_width = max_width - #indent - 2
+          local is_first_line = true
+
           while #remaining > list_max_width do
             local cut_pos = list_max_width
             for i = list_max_width, 1, -1 do
@@ -105,11 +107,23 @@ local function format_long_lines()
                 break
               end
             end
-            table.insert(new_lines, indent .. bullet .. " " .. remaining:sub(1, cut_pos))
+
+            if is_first_line then
+              table.insert(new_lines, indent .. bullet .. " " .. remaining:sub(1, cut_pos))
+              is_first_line = false
+            else
+              table.insert(new_lines, indent .. "  " .. remaining:sub(1, cut_pos))
+            end
+
             remaining = remaining:sub(cut_pos + 1):gsub("^%s+", "")
           end
+
           if remaining ~= "" then
-            table.insert(new_lines, indent .. bullet .. " " .. remaining)
+            if is_first_line then
+              table.insert(new_lines, indent .. bullet .. " " .. remaining)
+            else
+              table.insert(new_lines, indent .. "  " .. remaining)
+            end
           end
         else
           table.insert(new_lines, line)
@@ -121,6 +135,9 @@ local function format_long_lines()
         if content then
           local remaining = content
           local list_max_width = max_width - #indent - #num
+          local is_first_line = true
+          local continuation_indent = string.rep(" ", #num)
+
           while #remaining > list_max_width do
             local cut_pos = list_max_width
             for i = list_max_width, 1, -1 do
@@ -129,11 +146,23 @@ local function format_long_lines()
                 break
               end
             end
-            table.insert(new_lines, indent .. num .. remaining:sub(1, cut_pos))
+
+            if is_first_line then
+              table.insert(new_lines, indent .. num .. remaining:sub(1, cut_pos))
+              is_first_line = false
+            else
+              table.insert(new_lines, indent .. continuation_indent .. remaining:sub(1, cut_pos))
+            end
+
             remaining = remaining:sub(cut_pos + 1):gsub("^%s+", "")
           end
+
           if remaining ~= "" then
-            table.insert(new_lines, indent .. num .. remaining)
+            if is_first_line then
+              table.insert(new_lines, indent .. num .. remaining)
+            else
+              table.insert(new_lines, indent .. continuation_indent .. remaining)
+            end
           end
         else
           table.insert(new_lines, line)
