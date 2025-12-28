@@ -207,3 +207,11 @@ vim.api.nvim_create_autocmd("BufWritePre", {
     vim.fn.setpos(".", save_cursor)
   end,
 })
+
+vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
+  pattern = ".clangd",
+  callback = function()
+    vim.b.autoformat = false
+    vim.b.conform_disable = true
+  end,
+})
