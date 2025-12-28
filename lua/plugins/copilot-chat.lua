@@ -140,7 +140,7 @@ Your goal is to make every answer useful, clear, and aligned with my style: prof
       },
       -- Select from available prompts (alphabetically sorted)
       {
-        "<leader>aP",
+        "<leader>ap",
         function()
           local sorted_prompts = vim.tbl_keys(prompts)
           table.sort(sorted_prompts)
