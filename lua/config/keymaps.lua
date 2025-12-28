@@ -19,3 +19,11 @@ vim.keymap.set("n", "<leader>ct", function()
     print("Copilot suggestions enabled")
   end
 end, { desc = "Toggle Copilot suggestions" })
+
+-- keymap rename
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(event)
+    local opts = { buffer = event.buf, desc = "Rename symbol" }
+    vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, opts)
+  end,
+})
