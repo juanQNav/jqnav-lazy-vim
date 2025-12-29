@@ -29,6 +29,7 @@ local prompts = {
               and idiomatic, and follow standard English naming conventions (camelCase, snake_case, etc. as appropriate for the language)."]],
   ConventionalCommit = [["Generate a Conventional Commit message for the following code changes using the format
                     'type(scope): description'. Choose the appropriate type (feat, fix, docs, refactor, etc.) and write a clear, concise description."]],
+  ConventionalArgparser = "Please provide provide better conventional argparse for the following code, include long and short option (1 character).",
 }
 
 return {
