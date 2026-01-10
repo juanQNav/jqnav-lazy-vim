@@ -1,5 +1,4 @@
 return {
-  { import = "nvchad.blink.lazyspec" },
   {
     "saghen/blink.cmp",
     dependencies = {
