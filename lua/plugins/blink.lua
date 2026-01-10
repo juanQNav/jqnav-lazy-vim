@@ -1,14 +1,6 @@
 return {
   {
     "saghen/blink.cmp",
-    dependencies = {
-      {
-        "supermaven-inc/supermaven-nvim",
-        opts = {},
-        cmd = "SupermavenUseFree",
-      },
-      "huijiro/blink-cmp-supermaven",
-    },
     ---@module 'blink.cmp'
     ---@type blink.cmp.Config
     opts = {
@@ -31,16 +23,9 @@ return {
         completion = { menu = { auto_show = true } },
       },
       sources = {
-        default = { "lsp", "snippets", "buffer", "path", "supermaven" },
+        default = { "lsp", "snippets", "buffer", "path" },
         per_filetype = {
           codecompanion = { "codecompanion" },
-        },
-        providers = {
-          supermaven = {
-            name = "supermaven",
-            module = "blink-cmp-supermaven",
-            async = true,
-          },
         },
       },
     },
