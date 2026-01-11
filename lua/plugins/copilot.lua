@@ -4,17 +4,8 @@ return {
   event = "InsertEnter",
   opts = {
     suggestion = {
-      enabled = true,
-      auto_trigger = true,
-      debounce = 75,
-      keymap = {
-        accept = "<M-l>",
-        accept_word = false,
-        accept_line = false,
-        next = "<M-]>",
-        prev = "<M-[>",
-        dismiss = "<C-]>",
-      },
+      enabled = false, -- Disabled because we use blink.cmp
+      auto_trigger = false,
     },
     panel = { enabled = false },
     filetypes = {
@@ -30,26 +21,52 @@ return {
       ["copilot-chat"] = false,
     },
   },
+  -- The toggle will now control the blink.cmp source
   keys = {
     {
       "<leader>at",
       function()
-        local copilot = require("copilot.suggestion")
-        if _G.copilot_suggestions_enabled == nil then
-          _G.copilot_suggestions_enabled = true
+        local config = require("blink.cmp.config")
+        local sources = config.sources.default
+
+        -- If sources is a function, invoke it to get the table
+        if type(sources) == "function" then
+          sources = sources()
         end
 
-        if _G.copilot_suggestions_enabled then
-          copilot.toggle_auto_trigger()
-          _G.copilot_suggestions_enabled = false
+        local has_copilot = vim.tbl_contains(sources, "copilot")
+
+        if has_copilot then
+          -- Remove copilot from source
+          local new_sources = vim.tbl_filter(function(v)
+            return v ~= "copilot"
+          end, sources)
+          config.sources.default = new_sources
           vim.notify("🚫 Copilot suggestions disabled", vim.log.levels.INFO)
         else
-          copilot.toggle_auto_trigger()
-          _G.copilot_suggestions_enabled = true
+          -- Add copilto to sourcers
+          local new_sources = vim.deepcopy(sources)
+          table.insert(new_sources, 2, "copilot")
+          config.sources.default = new_sources
           vim.notify("✅ Copilot suggestions enabled", vim.log.levels.INFO)
         end
       end,
       desc = "Toggle Copilot suggestions",
+      mode = "n",
+    },
+    {
+      "<leader>ai",
+      function()
+        local config = require("blink.cmp.config")
+        local sources = config.sources.default
+
+        if type(sources) == "function" then
+          sources = sources()
+        end
+
+        vim.notify("Active sources: " .. vim.inspect(sources), vim.log.levels.INFO)
+      end,
+      desc = "Show active completion sources",
       mode = "n",
     },
   },
