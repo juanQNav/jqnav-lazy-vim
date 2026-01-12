@@ -27,7 +27,7 @@ local prompts = {
   TranslateCodeToEnglish = [["Please translate all comments, print statements, variable names, function names, and any 
               other text in the following code to English. Maintain the original logic and structure, ensure the translations are clear 
               and idiomatic, and follow standard English naming conventions (camelCase, snake_case, etc. as appropriate for the language)."]],
-  ConventionalCommit = [["Generate a Conventional Commit message for the following code changes using the format
+  ConventionalCommit = [["Generate a Conventional Commit message for only the changes of the following code using the format
                     'type(scope): description'. Choose the appropriate type (feat, fix, docs, refactor, etc.) and write a clear, concise description."]],
   ConventionalArgparser = "Please provide provide better conventional argparse for the following code, include long and short option (1 character).",
 }
