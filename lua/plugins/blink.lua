@@ -5,7 +5,10 @@ return {
   },
   {
     "saghen/blink.cmp",
-    dependencies = { "giuxtaposition/blink-cmp-copilot" },
+    dependencies = {
+      "giuxtaposition/blink-cmp-copilot",
+      "saghen/blink.nvim",
+    },
     ---@module 'blink.cmp'
     ---@type blink.cmp.Config
     opts = {
@@ -26,6 +29,7 @@ return {
       cmdline = {
         keymap = { preset = "inherit" },
         completion = { menu = { auto_show = true } },
+        sources = {},
       },
       sources = {
         default = { "lsp", "copilot", "snippets", "buffer", "path" },
@@ -33,11 +37,14 @@ return {
           copilot = {
             name = "copilot",
             module = "blink-cmp-copilot",
-            score_offset = 100, -- High priority for Copilot suggestions
+            score_offset = 100,
             async = true,
           },
+          -- Obsidian providers are registered automatically by obsidian.nvim
+          -- DO NOT define them here to avoid conflicts
         },
         per_filetype = {
+          markdown = { "lsp", "obsidian", "obsidian_new", "obsidian_tags", "snippets", "buffer", "path" },
           codecompanion = { "codecompanion" },
         },
       },
