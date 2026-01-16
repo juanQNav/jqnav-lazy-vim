@@ -36,18 +36,16 @@ return {
       {
         "<leader>om",
         function()
-          local client = require("obsidian").get_client()
-          local note = client:current_note()
-          if not note then
-            vim.notify("No note found in current buffer", vim.log.levels.WARN)
+          local Obsidian = require("obsidian")
+          local api = Obsidian.api
+
+          local note = api.current_note()
+          if not note or not note.path then
+            vim.notify("No active Obsidian note", vim.log.levels.ERROR)
             return
           end
 
-          local vault_path = client:vault_root()
-          if not vault_path:exists() then
-            vim.notify("Could not determine vault root", vim.log.levels.ERROR)
-            return
-          end
+          local vault_path = note.path:parent():parent()
 
           local scan = require("plenary.scandir")
 
