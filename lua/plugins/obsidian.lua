@@ -82,13 +82,15 @@ return {
         -- Create a new newsletter issue
         ["<leader>onn"] = {
           action = function()
-            return require("obsidian").commands.new_note("Newsletter-Issue")
-          end,
-          opts = { buffer = true },
-        },
-        ["<leader>ont"] = {
-          action = function()
-            return require("obsidian").util.insert_template("Newsletter-Issue")
+            vim.ui.input({ prompt = "New note name: " }, function(input)
+              if input and input ~= "" then
+                local client = require("obsidian").get_client()
+                local note = client:new_note(input)
+                if note then
+                  client:open_note(note)
+                end
+              end
+            end)
           end,
           opts = { buffer = true },
         },
