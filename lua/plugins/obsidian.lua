@@ -12,26 +12,34 @@ return {
     cmd = { "ObsidianOpen", "ObsidianNew", "ObsidianQuickSwitch", "ObsidianToday", "ObsidianSearch" },
     keys = {
       { "<leader>oo", "<cmd>ObsidianQuickSwitch<cr>", desc = "Obsidian Quick Switch" },
-      { "<leader>on", "<cmd>ObsidianNew<cr>", desc = "Obsidian New Note" },
       { "<leader>ot", "<cmd>ObsidianToday<cr>", desc = "Obsidian Today" },
       -- Custom keymaps (replacing deprecated mappings)
       { "<leader>of", "<cmd>ObsidianFollowLink<cr>", desc = "Obsidian Follow Link", ft = "markdown" },
       { "<leader>od", "<cmd>ObsidianToggleCheckbox<cr>", desc = "Obsidian Toggle Checkbox", ft = "markdown" },
       {
-        "<leader>onn",
+        "<leader>on",
         function()
-          vim.ui.input({ prompt = "New note name: " }, function(input)
-            if input and input ~= "" then
-              local client = require("obsidian").get_client()
-              local note = client:new_note(input)
-              if note then
-                client:open_note(note)
+          local title = vim.fn.input("Note title: ")
+          if title ~= "" then
+            vim.cmd("ObsidianNew " .. title)
+            -- Wait a moment for the new note to be created
+            vim.defer_fn(function()
+              -- Add aliases to frontmatter
+              local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+              for i, line in ipairs(lines) do
+                if line:match("^tags:") then
+                  -- Insertar aliases justo después de tags
+                  vim.api.nvim_buf_set_lines(0, i, i, false, {
+                    "aliases:",
+                    '  - "' .. title .. '"',
+                  })
+                  break
+                end
               end
-            end
-          end)
+            end, 100)
+          end
         end,
-        desc = "Obsidian New Named Note",
-        ft = "markdown",
+        desc = "Obsidian New Note",
       },
       {
         "<leader>om",
