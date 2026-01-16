@@ -94,6 +94,116 @@ return {
           end,
           opts = { buffer = true },
         },
+        -- Move note to folder
+        ["<leader>om"] = {
+          action = function()
+            local client = require("obsidian").get_client()
+            local note = client:current_note()
+            if not note then
+              vim.notify("No note found in current buffer", vim.log.levels.WARN)
+            end
+
+            local vault_path = client:vault_root()
+            if not vault_path:exists() then
+              vim.notify("Could not determine vault root", vim.log.levels.ERROR)
+              return
+            end
+
+            local scan = require("plenary.scandir")
+
+            -- Exocortex folders
+            local exocortex_folders = {
+              limbus = true,
+              templates = true,
+            }
+            local existing_folders = {}
+
+            local subdirs = scan.scan_dir(tostring(vault_path), {
+              only_dirs = true,
+              depth = 2,
+            })
+
+            for _, subdir in ipairs(subdirs) do
+              local relative = subdir:gsub(tostring(vault_path) .. "/", "")
+              table.insert(existing_folders, relative)
+            end
+
+            -- Scan for exisitig folders within Exocortex structure
+            for _, base_folder in ipairs(exocortex_folders) do
+              local base_path = vault_path / base_folder
+              if base_path:exists() then
+                table.insert(existing_folders, base_folder)
+
+                -- Scan subdirectories
+                local subdirs = scan.scan_dir(tostring(base_path), {
+                  only_dirs = true,
+                  depth = 2,
+                })
+
+                for _, subdir in ipairs(subdirs) do
+                  local relative = subdir:gsub(tostring(vault_path) .. "/", "")
+                  local folder_name = relative:match("^([^/]+)")
+                  if not exocortex_folders[folder_name] then
+                    table.insert(existing_folders, relative)
+                  end
+                end
+              end
+            end
+
+            -- Sort folders alphabetically
+            table.sort(existing_folders)
+            -- Add option to create new folder at the beginning
+            local options = vim.deepcopy(existing_folders)
+            vim.list_extend(options, { "  Create new folder..." })
+
+            vim.ui.select(options, {
+              prompt = "Move note to:",
+              format_item = function(item)
+                if item == "  Create new folder..." then
+                  return item
+                end
+                return "  " .. item
+              end,
+            }, function(choice)
+              if not choice then
+                return
+              end
+
+              local function move_note(target_folder)
+                local new_dir = vault_path / target_folder
+                new_dir:mkdir({ parents = true, exists_ok = true })
+
+                local old_path = note.path
+                local new_path = new_dir / old_path.name
+
+                -- Check if file already exists at destination
+                if vim.loop.fs_stat(tostring(new_path)) then
+                  vim.notify(string.format("File already exists at %s", target_folder), vim.log.levels.ERROR)
+                  return
+                end
+
+                vim.loop.fs_rename(tostring(old_path), tostring(new_path))
+                vim.cmd("bdelete")
+                vim.cmd("edit " .. tostring(new_path))
+
+                vim.notify(string.format("✓ Moved to %s", target_folder), vim.log.levels.INFO)
+              end
+
+              if choice == "  Create new folder..." then
+                vim.ui.input({
+                  prompt = "New folder path (e.g., projects/myproject): ",
+                }, function(new_folder)
+                  if new_folder and new_folder ~= "" then
+                    move_note(new_folder)
+                  end
+                end)
+              else
+                move_note(choice)
+              end
+            end)
+          end,
+          opts = { buffer = true },
+        },
       },
 
       -- Function to generate frontmatter for notes
