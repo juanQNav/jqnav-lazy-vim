@@ -26,7 +26,7 @@ return {
         "dot",
         "javascript",
         "mermaid",
-        "norg",
+        -- "norg",
         "typescript",
       },
       highlight = {
