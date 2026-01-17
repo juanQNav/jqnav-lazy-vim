@@ -21,25 +21,49 @@ return {
         function()
           local title = vim.fn.input("Note title: ")
           if title ~= "" then
-            vim.cmd("ObsidianNew " .. title)
-            -- Wait a moment for the new note to be created
-            vim.defer_fn(function()
-              -- Add aliases to frontmatter
-              local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-              for i, line in ipairs(lines) do
-                if line:match("^tags:") then
-                  -- Insertar aliases justo después de tags
-                  vim.api.nvim_buf_set_lines(0, i, i, false, {
-                    "aliases:",
-                    '  - "' .. title .. '"',
-                  })
-                  break
-                end
-              end
-            end, 100)
+            local obsidian = require("obsidian").get_client()
+
+            -- Generate note ID using your custom function
+            local note_id = tostring(os.time()) .. "-" .. title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
+
+            -- Create the note path
+            local note_path = obsidian.dir / obsidian.opts.notes_subdir / (note_id .. ".md")
+
+            -- Create frontmatter
+            local frontmatter = {
+              id = note_id,
+              aliases = { title },
+              tags = {},
+            }
+
+            -- Convert frontmatter to YAML string
+            local yaml_lines = { "---" }
+            table.insert(yaml_lines, "id: " .. frontmatter.id)
+            table.insert(yaml_lines, "aliases:")
+            for _, alias in ipairs(frontmatter.aliases) do
+              table.insert(yaml_lines, "  - " .. alias)
+            end
+            table.insert(yaml_lines, "tags:")
+            table.insert(yaml_lines, "---")
+            table.insert(yaml_lines, "")
+            table.insert(yaml_lines, "# " .. title)
+
+            -- Create the file with frontmatter
+            local file = io.open(tostring(note_path), "w")
+            if file then
+              file:write(table.concat(yaml_lines, "\n") .. "\n")
+              file:close()
+
+              -- Open the new note
+              vim.cmd("edit " .. tostring(note_path))
+              vim.notify("✓ Created note: " .. title, vim.log.levels.INFO)
+            else
+              vim.notify("Error creating note", vim.log.levels.ERROR)
+            end
           end
         end,
         desc = "Obsidian New Note",
+        ft = "markdown",
       },
       {
         "<leader>om",
