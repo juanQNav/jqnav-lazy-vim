@@ -88,6 +88,7 @@ local function format_long_lines()
         line:match("^#+%s")
         or in_table
         or line:match("%b[]%b()") -- Lines with Markdown links
+        or line:match("%[%b[]%]") -- Lines with Markdown footnote links (not Obsidian [[links]])
       then
         table.insert(new_lines, line)
 
