@@ -9,10 +9,11 @@ return {
     version = "*", -- Use the latest release instead of the latest commit (recommended)
     lazy = true, -- Don't load immediately
     ft = "markdown", -- También cargar con cualquier archivo markdown
-    cmd = { "ObsidianOpen", "ObsidianNew", "ObsidianQuickSwitch", "ObsidianToday", "ObsidianSearch" },
+    cmd = { "ObsidianOpen", "ObsidianQuickSwitch", "ObsidianSearch" },
     keys = {
       { "<leader>oo", "<cmd>ObsidianQuickSwitch<cr>", desc = "Obsidian Quick Switch" },
-      { "<leader>ot", "<cmd>ObsidianToday<cr>", desc = "Obsidian Today" },
+      { "<leader>os", "<cmd>ObsidianSearch<cr>", desc = "Obsidian Search" },
+      { "<leader>oa", "<cmd>ObsidianOpen<cr>", desc = "Obsidian Open Vault" },
       -- Custom keymaps (replacing deprecated mappings)
       { "<leader>of", "<cmd>ObsidianFollowLink<cr>", desc = "Obsidian Follow Link", ft = "markdown" },
       { "<leader>od", "<cmd>ObsidianToggleCheckbox<cr>", desc = "Obsidian Toggle Checkbox", ft = "markdown" },
@@ -63,7 +64,6 @@ return {
           end
         end,
         desc = "Obsidian New Note",
-        ft = "markdown",
       },
       {
         "<leader>om",
