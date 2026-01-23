@@ -64,7 +64,7 @@ return {
         component_separators = { left = "", right = "" },
       },
       sections = {
-        lualine_a = { { "mode", icon = "󱗞" } },
+        lualine_a = { { "mode", icon = "󰄛" } },
         lualine_b = { "branch", "diff" },
         lualine_c = { "filename" },
         lualine_x = { "encoding", "filetype" },
