@@ -1,6 +1,6 @@
 # jqnav LazyVim
 
-## Instructions
+## Installation
 
 ### 1. Clone this repo
 
