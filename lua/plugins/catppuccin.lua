@@ -59,11 +59,11 @@ return {
     vim.cmd.colorscheme("catppuccin")
 
     -- function for toggle transparency
-    local transparen_bg = true
+    local transparent_bg = true
     _G.toggle_transparency = function()
-      transparen_bg = not transparen_bg
+      transparent_bg = not transparent_bg
       require("catppuccin").setup({
-        transparent_background = transparen_bg,
+        transparent_background = transparent_bg,
       })
       custom_highlights = {}, vim.cmd.colorscheme("catppuccin")
     end
