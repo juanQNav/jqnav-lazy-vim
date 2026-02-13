@@ -30,6 +30,7 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.opt_local.textwidth = line_width
     vim.opt_local.formatoptions = "tcroqln"
     vim.opt_local.wrapmargin = 0
+    vim.opt.wrap = false
   end,
 })
 
@@ -214,5 +215,14 @@ vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile" }, {
   callback = function()
     vim.b.autoformat = false
     vim.b.conform_disable = true
+  end,
+})
+
+-- pdf-view
+vim.api.nvim_create_autocmd("BufReadPost", {
+  pattern = "*.pdf",
+  callback = function()
+    local file_path = vim.api.nvim_buf_get_name(0)
+    require("pdfview").open(file_path)
   end,
 })

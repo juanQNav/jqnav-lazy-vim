@@ -27,3 +27,20 @@ vim.api.nvim_create_autocmd("LspAttach", {
     vim.keymap.set("n", "<leader>cr", vim.lsp.buf.rename, opts)
   end,
 })
+
+-- pdf-view
+-- Navigate to the next page in the PDF
+vim.keymap.set(
+  "n",
+  "<leader>jj",
+  "<cmd>:lua require('pdfview.renderer').next_page()<CR>",
+  { desc = "PDFview: Next page" }
+)
+
+-- Navigate to the previous page in the PDF
+vim.keymap.set(
+  "n",
+  "<leader>kk",
+  "<cmd>:lua require('pdfview.renderer').previous_page()<CR>",
+  { desc = "PDFview: Previous page" }
+)
