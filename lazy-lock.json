@@ -3,6 +3,7 @@
   "CopilotChat.nvim": { "branch": "main", "commit": "21bdecb25aa72119d11d7fc08c7e0ce323f1b540" },
   "LazyVim": { "branch": "main", "commit": "28db03f958d58dfff3c647ce28fdc1cb88ac158d" },
   "LuaSnip": { "branch": "master", "commit": "3732756842a2f7e0e76a7b0487e9692072857277" },
+  "PDFview": { "branch": "main", "commit": "972dfcce5c0de578865649940f44bf57a700498d" },
   "SchemaStore.nvim": { "branch": "main", "commit": "fb7b9034285a5658c746faa12eff8c1c9d9b11b1" },
   "blink-cmp-copilot": { "branch": "main", "commit": "439cff78780c033aa23cf061d7315314b347e3c1" },
   "blink.cmp": { "branch": "main", "commit": "b19413d214068f316c78978b08264ed1c41830ec" },
@@ -55,5 +56,6 @@
   "venv-selector.nvim": { "branch": "main", "commit": "e56bed0eccc80d64ca2ec176cadd489b1bf4ea7d" },
   "vim-multiple-cursors": { "branch": "master", "commit": "6456718e1d30b42c04b920c5413ca44f68f08759" },
   "vim-prisma": { "branch": "main", "commit": "95c5b25066efb34c75bce78698baa371fe0ee7c2" },
+  "wezterm-types": { "branch": "main", "commit": "d2c3580af878ffa223f972ba2caab76fb7f5f130" },
   "which-key.nvim": { "branch": "main", "commit": "3aab2147e74890957785941f0c1ad87d0a44c15a" }
 }
