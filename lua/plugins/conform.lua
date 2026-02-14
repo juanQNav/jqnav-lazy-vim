@@ -37,9 +37,10 @@ return {
       less = { "prettier" },
       html = { "prettier" },
       json = { "prettier" },
-      jsonc = { "prettier" },
+      jsonc = {},
       yaml = { "prettier" },
       markdown = { "prettier" },
+      tex = { "latexindent" },
       -- Explicity exclude Python
       python = has_ruff() and { "ruff_format", "ruff_organize_imports" } or {},
     })
