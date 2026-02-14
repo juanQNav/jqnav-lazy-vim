@@ -1,4 +1,4 @@
--- lua/plugins/prettier.lua
+-- lua/plugins/conform.lua
 return {
   "stevearc/conform.nvim",
   opts = function(_, opts)
@@ -52,6 +52,13 @@ return {
       args = { "--stdin-filepath", "$FILENAME" },
       stdin = true,
       cwd = require("conform.util").root_file({ ".prettierrc", ".prettierrc.json", "prettier.config.js" }),
+    }
+
+    -- LaTeX: latexindent with line-break modification enabled
+    opts.formatters.latexindent = {
+      command = "latexindent",
+      args = { "-l", "-m" },
+      stdin = true,
     }
     return opts
   end,
