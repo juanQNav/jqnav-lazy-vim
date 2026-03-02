@@ -5,22 +5,21 @@ return {
   lazy = false,
   config = function()
     require("catppuccin").setup({
-      flavour = "macchiato", -- latte, frappe, macchiato, mocha
-      background = {
-        light = "latte",
-        dark = "mocha",
+      flavour = "mocha", -- latte, frappe, macchiato, mocha
+      transparent_background = false,
+      float = {
+        transparent = false, -- enable transparent floating windows
+        solid = false, -- use solid styling for floating windows, see |winborder|
       },
-      transparent_background = true,
-      show_end_of_buffer = false,
+      show_end_of_buffer = false, -- show the '~' characters after the end of buffers
       term_colors = false,
       dim_inactive = {
         enabled = false,
         shade = "dark",
         percentage = 0.15,
       },
-      no_italic = false,
-      no_bold = false,
-      no_underline = false,
+      no_italic = false, -- Force no italic
+      no_bold = false, -- Force no bold
       styles = {
         comments = { "italic" },
         conditionals = { "italic" },
@@ -36,39 +35,25 @@ return {
         operators = {},
       },
       color_overrides = {},
-      custom_highlights = function(colors)
-        return {
-          -- Make floating windows transparent
-          NormalFloat = { bg = "NONE" },
-        }
-      end,
-      default_integrations = true,
+      custom_highlights = {},
       integrations = {
         cmp = true,
         gitsigns = true,
         nvimtree = true,
-        treesitter = true,
-        notify = false,
-        mini = {
-          enabled = true,
-          indentscope_color = "",
+        telescope = true,
+        render_markdown = true,
+        snacks = {
+          enabled = false,
+          indent_scope_color = "", -- catppuccin color (eg. `lavender`) Default: text
         },
+        blink_cmp = {
+          style = "bordered",
+        },
+        notify = false,
+        mini = false,
       },
     })
-
+    -- setup must be called before loading
     vim.cmd.colorscheme("catppuccin")
-
-    -- function for toggle transparency
-    local transparent_bg = true
-    _G.toggle_transparency = function()
-      transparent_bg = not transparent_bg
-      require("catppuccin").setup({
-        transparent_background = transparent_bg,
-      })
-      custom_highlights = {}, vim.cmd.colorscheme("catppuccin")
-    end
-
-    -- keymap to toggle transparency
-    vim.keymap.set("n", "<leader>ut", "<cmd>lua toggle_transparency()<CR>", { desc = "Toggle Transparency" })
   end,
 }
