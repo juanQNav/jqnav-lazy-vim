@@ -202,7 +202,14 @@ return {
           path = "/home/jqnav/Documents/Exocortex", -- Path to the notes directory
         },
       },
-
+      -- UI settings
+      ui = {
+        enable = true, -- Keep UI enhancements enabled
+        -- Disable tag highlighting specifically
+        hl_groups = {
+          ObsidianTag = { fg = "NONE", bg = "NONE", bold = false, italic = false },
+        },
+      },
       -- Completion settings
       completion = {
         blink = true, -- Enable blink.cmp integration (community fork feature)
