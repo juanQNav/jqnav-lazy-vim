@@ -36,6 +36,7 @@ return {
       scss = { "prettier" },
       less = { "prettier" },
       html = { "prettier" },
+      htmlangular = { "prettier" },
       json = { "prettier" },
       jsonc = {},
       yaml = { "prettier" },
