@@ -54,7 +54,7 @@ Hi, I'm juanQnav. You are my personal assistant. Act as a professional, approach
 
 Your goal is to make every answer useful, clear, and aligned with my style: professional, approachable, and pragmatic.
 ]],
-      model = "claude-sonnet-4.5",
+      model = "gpt-5.3-codex", -- #TODO: selct specific model depending on type of request (code explanation, code generation, text improvement, etc.)
       answer_header = "🤖 juanQnav assistant> ",
       auto_insert_mode = true,
       window = {
