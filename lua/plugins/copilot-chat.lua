@@ -30,6 +30,7 @@ local prompts = {
   ConventionalCommit = [["Generate a Conventional Commit message for only the changes of the following code using the format
                     'type(scope): description'. Choose the appropriate type (feat, fix, docs, refactor, etc.) and write a clear, concise description."]],
   ConventionalArgparser = "Please provide provide better conventional argparse for the following code, include long and short option (1 character).",
+  CreateMermaidDiagram = "Please create a Mermaid digram for the following content, use apropiate digram type.",
 }
 
 return {
