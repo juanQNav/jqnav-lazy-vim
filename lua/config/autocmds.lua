@@ -226,3 +226,24 @@ vim.api.nvim_create_autocmd("BufReadPost", {
     require("pdfview").open(file_path)
   end,
 })
+
+-- mark TODO as DONE
+vim.api.nvim_create_autocmd("BufWritePre", {
+  pattern = "*.md",
+  callback = function(args)
+    local bufnr = args.buf
+
+    -- save cursor position to avoid jump
+    local view = vim.fn.winsaveview()
+
+    -- Apply substitution only in this buffer
+    -- Explanation:
+    -- ^\s*-\s*[[xX]\] -> mardown checked checkbox
+    -- \s*#TODO: ->TODO tag with colon
+    -- Repleaced by same checkbox + #DONE:
+    vim.cmd([[silent! keepjumps %s/^\(\s*-\s*\[[xX]\]\)\s*#TODO:/\1 #DONE:/ge]])
+
+    -- Restore cursor/view
+    vim.fn.winrestview(view)
+  end,
+})
