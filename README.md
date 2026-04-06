@@ -17,7 +17,7 @@ cp ~/.config/nvim/ ~/.config/nvim.bak/
 ### 3. Set `jqnav-lazy-vim` as your nvim configuration
 
 ```bash
-mv jqnav-lazy-vim/ ~/.config/nvim/
+mv jqnav-lazy-vim ~/.config/nvim/
 ```
 
 ## Plugins Summary
