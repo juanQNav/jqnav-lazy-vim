@@ -178,10 +178,8 @@ return {
     },
     event = {
       -- Load when opening markdown files in the Obsidian workspace
-      "BufReadPre "
-        .. vim.fn.expand("~")
-        .. "/Documents/Exocortex/**.md",
-      "BufNewFile " .. vim.fn.expand("~") .. "/Documents/Exocortex/**.md",
+      "BufReadPre " .. vim.fn.expand("~") .. "/Exocortex/**.md",
+      "BufNewFile " .. vim.fn.expand("~") .. "/Exocortex/**.md",
     },
     dependencies = {
       -- Dependency: plenary.nvim
@@ -199,7 +197,7 @@ return {
       workspaces = {
         {
           name = "Exocortex", -- Name of the workspace
-          path = "/home/jqnav/Documents/Exocortex", -- Path to the notes directory
+          path = "~/Exocortex", -- Path to the notes directory
         },
       },
       -- UI settings
