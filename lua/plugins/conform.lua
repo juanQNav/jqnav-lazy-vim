@@ -38,6 +38,7 @@ return {
       html = { "prettier" },
       htmlangular = { "prettier" },
       json = { "prettier" },
+      php = { "prettier" },
       jsonc = {},
       yaml = { "prettier" },
       markdown = { "prettier" },
