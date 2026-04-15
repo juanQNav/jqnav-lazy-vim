@@ -20,6 +20,20 @@ cp ~/.config/nvim/ ~/.config/nvim.bak/
 mv jqnav-lazy-vim ~/.config/nvim/
 ```
 
+## Requirements
+
+1. LazyGit
+2. Mermaid cli
+3. nodejs
+4. git
+5. gcc
+6. fzf
+7. fd-find
+8. ripgrep
+9. coreutils
+10. bat
+11. curl
+
 ## Plugins Summary
 
 ## Basic guide
