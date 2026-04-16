@@ -44,3 +44,11 @@ vim.keymap.set(
   "<cmd>:lua require('pdfview.renderer').previous_page()<CR>",
   { desc = "PDFview: Previous page" }
 )
+
+-- Del other Default terminal
+vim.keymap.del("n", "<leader>ft")
+vim.keymap.del("n", "<leader>fT")
+-- Open terminal
+vim.keymap.set("n", "<leader>ct", function()
+  require("lazyvim.util").terminal(nil, { cwd = require("lazyvim.util").root() })
+end, { desc = "Terminal (Root Dir)" })
