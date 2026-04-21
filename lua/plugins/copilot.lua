@@ -1,7 +1,31 @@
+-- Helper: current label based on toggle state
+local function copilot_label()
+  if vim.g.blink_copilot_enabled == nil then
+    vim.g.blink_copilot_enabled = true
+  end
+  return vim.g.blink_copilot_enabled and " Disable Copilot suggestions" or " Enalble Copilot suggestions"
+end
+
+-- Helper: refresh WhichKey label
+local function refresh_copilot_wk()
+  local ok, wk = pcall(require, "which-key")
+  if not ok then
+    return
+  end
+
+  wk.add({
+    { "<leader>at", desc = copilot_label() },
+  })
+end
+
 return {
   "zbirenbaum/copilot.lua",
   cmd = "Copilot",
   event = "InsertEnter",
+  init = function()
+    refresh_copilot_wk()
+  end,
+
   opts = {
     suggestion = {
       enabled = false, -- Disabled because we use blink.cmp
@@ -21,35 +45,22 @@ return {
       ["copilot-chat"] = false,
     },
   },
-  -- The toggle will now control the blink.cmp source
   keys = {
     {
       "<leader>at",
       function()
-        local config = require("blink.cmp.config")
-        local sources = config.sources.default
-
-        -- If sources is a function, invoke it to get the table
-        if type(sources) == "function" then
-          sources = sources()
+        -- Toggle Copilot source for blink.cmp
+        if vim.g.blink_copilot_enabled == nil then
+          vim.g.blink_copilot_enabled = true
         end
 
-        local has_copilot = vim.tbl_contains(sources, "copilot")
+        vim.g.blink_copilot_enabled = not vim.g.blink_copilot_enabled
+        refresh_copilot_wk()
 
-        if has_copilot then
-          -- Remove copilot from source
-          local new_sources = vim.tbl_filter(function(v)
-            return v ~= "copilot"
-          end, sources)
-          config.sources.default = new_sources
-          vim.notify("🚫 Copilot suggestions disabled", vim.log.levels.INFO)
-        else
-          -- Add copilto to sourcers
-          local new_sources = vim.deepcopy(sources)
-          table.insert(new_sources, 2, "copilot")
-          config.sources.default = new_sources
-          vim.notify("✅ Copilot suggestions enabled", vim.log.levels.INFO)
-        end
+        vim.notify(
+          vim.g.blink_copilot_enabled and "✅ Copilot suggestions enabled" or "🚫 Copilot suggestions disabled",
+          vim.log.levels.INFO
+        )
       end,
       desc = "Toggle Copilot suggestions",
       mode = "n",
@@ -60,6 +71,7 @@ return {
         local config = require("blink.cmp.config")
         local sources = config.sources.default
 
+        -- Resolve dynamic sources function
         if type(sources) == "function" then
           sources = sources()
         end

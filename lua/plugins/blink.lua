@@ -1,3 +1,19 @@
+local function get_default_sources()
+  -- Default value for the Copilot toggle
+  if vim.g.blink_copilot_enabled == nil then
+    vim.g.blink_copilot_enabled = true
+  end
+
+  local sources = { "lsp", "snippets", "buffer", "path" }
+
+  -- Insert Copilot only when enabled
+  if vim.g.blink_copilot_enabled then
+    table.insert(sources, 2, "copilot")
+  end
+
+  return sources
+end
+
 return {
   {
     "giuxtaposition/blink-cmp-copilot",
@@ -32,7 +48,7 @@ return {
         sources = {},
       },
       sources = {
-        default = { "lsp", "copilot", "snippets", "buffer", "path" },
+        default = get_default_sources,
         providers = {
           copilot = {
             name = "copilot",
