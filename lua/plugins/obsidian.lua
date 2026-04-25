@@ -175,6 +175,24 @@ return {
         desc = "Obsidian Move Note",
         ft = "markdown",
       },
+      {
+        "<leader>ot",
+        function()
+          local line = vim.api.nvim_get_current_line()
+
+          if line:match("^%- %[ %] #TODO:") then
+            local new_line = line:gsub("^%- %[ %] #TODO:", "- [ ]", 1)
+            vim.api.nvim_set_current_line(new_line)
+          elseif line:match("^%- %[ %]") then
+            local new_line = line:gsub("^%- %[ %]", "- [ ] #TODO:", 1)
+            vim.api.nvim_set_current_line(new_line)
+          else
+            vim.api.nvim_set_current_line("- [ ] #TODO: " .. line)
+          end
+        end,
+        desc = "Toggle TODO checkbox",
+        ft = "markdown",
+      },
     },
     event = {
       -- Load when opening markdown files in the Obsidian workspace
@@ -213,7 +231,18 @@ return {
         blink = true, -- Enable blink.cmp integration (community fork feature)
         min_chars = 1, -- Start suggesting after 1 character
       },
-
+      -- Checkbox
+      checkbox = {
+        enable = true,
+        create_new = true,
+        order = {
+          " ",
+          "x",
+          "!",
+          ">",
+          "~",
+        },
+      },
       notes_subdir = "limbus", -- Subdirectory for notes
       new_notes_location = "limbus", -- Location for new notes
 
