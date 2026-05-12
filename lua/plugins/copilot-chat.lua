@@ -55,7 +55,7 @@ Hi, I'm juanQnav. You are my personal assistant. Act as a professional, approach
 
 Your goal is to make every answer useful, clear, and aligned with my style: professional, approachable, and pragmatic.
 ]],
-      model = "gpt-5.3-codex", -- #TODO: selct specific model depending on type of request (code explanation, code generation, text improvement, etc.)
+      model = "gpt-5.2-codex", -- #TODO: selct specific model depending on type of request (code explanation, code generation, text improvement, etc.)
       answer_header = "🤖 juanQnav assistant> ",
       auto_insert_mode = true,
       window = {
@@ -120,7 +120,7 @@ Your goal is to make every answer useful, clear, and aligned with my style: prof
     keys = {
       -- Toggle Copilot Chat
       {
-        "<leader>aa",
+        "<leader>aca",
         function()
           local chat = require("CopilotChat")
           chat.toggle()
@@ -130,7 +130,7 @@ Your goal is to make every answer useful, clear, and aligned with my style: prof
       },
       -- Quick question
       {
-        "<leader>aq",
+        "<leader>acq",
         function()
           local input = vim.fn.input("Quick Chat: ")
           if input ~= "" then
@@ -142,7 +142,7 @@ Your goal is to make every answer useful, clear, and aligned with my style: prof
       },
       -- Select from available prompts (alphabetically sorted)
       {
-        "<leader>ap",
+        "<leader>acp",
         function()
           local sorted_prompts = vim.tbl_keys(prompts)
           table.sort(sorted_prompts)
@@ -159,13 +159,13 @@ Your goal is to make every answer useful, clear, and aligned with my style: prof
       },
       -- Show help
       {
-        "<leader>ah",
+        "<leader>ach",
         ":CopilotChatHelp<cr>",
         desc = "Show help",
       },
       -- set up a file picker dor copilot chat
       {
-        "<leader>af",
+        "<leader>acf",
         function()
           require("telescope.builtin").find_files({
             attach_mappings = function(_, map)
