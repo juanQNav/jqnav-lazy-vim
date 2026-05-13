@@ -33,6 +33,8 @@ mv jqnav-lazy-vim ~/.config/nvim/
 9. coreutils
 10. bat
 11. curl
+12. opencode
+13. github cli
 
 ## Plugins Summary
 
