@@ -1,5 +1,8 @@
 -- GitHub Copilot Chat configuration for LazyVim
 -- All keymaps under <leader>a (AI)
+--
+-- IMPORTANT: Requires `:Copilot auth` to be run first (same as copilot.lua suggestions).
+-- Without authentication, CopilotChat will not be able to connect to the API.
 
 local prompts = {
   BetterNamings = "Please provide better names for the following variables and functions.",

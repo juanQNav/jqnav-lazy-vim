@@ -16,13 +16,10 @@ end
 
 return {
   {
-    "giuxtaposition/blink-cmp-copilot",
-    dependencies = { "zbirenbaum/copilot.lua" },
-  },
-  {
     "saghen/blink.cmp",
     dependencies = {
       "giuxtaposition/blink-cmp-copilot",
+      "zbirenbaum/copilot.lua", -- Ensure copilot.lua loads first
       "saghen/blink.nvim",
     },
     ---@module 'blink.cmp'
@@ -55,6 +52,16 @@ return {
             module = "blink-cmp-copilot",
             score_offset = 100,
             async = true,
+            -- Ensure copilot items are clearly marked
+            transform_items = function(_, items)
+              local CompletionItemKind = require("blink.cmp.types").CompletionItemKind
+              local kind_idx = #CompletionItemKind + 1
+              CompletionItemKind[kind_idx] = "Copilot"
+              for _, item in ipairs(items) do
+                item.kind = kind_idx
+              end
+              return items
+            end,
           },
           -- Obsidian providers are registered automatically by obsidian.nvim
           -- DO NOT define them here to avoid conflicts

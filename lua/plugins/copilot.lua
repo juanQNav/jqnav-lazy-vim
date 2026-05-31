@@ -1,3 +1,6 @@
+-- IMPORTANT: First time setup requires running `:Copilot auth` in Neovim to authenticate
+-- with GitHub. Without this, Copilot suggestions will not work.
+--
 -- Helper: current label based on toggle state
 local function copilot_label()
   if vim.g.blink_copilot_enabled == nil then
@@ -79,6 +82,41 @@ return {
         vim.notify("Active sources: " .. vim.inspect(sources), vim.log.levels.INFO)
       end,
       desc = "Show active completion sources",
+      mode = "n",
+    },
+    -- Debug: Check Copilot status
+    {
+      "<leader>ad",
+      function()
+        local msgs = {}
+
+        -- Check if copilot.lua is loaded
+        local copilot_loaded = pcall(require, "copilot")
+        table.insert(msgs, "copilot.lua loaded: " .. (copilot_loaded and "✅" or "❌"))
+
+        -- Check if blink-cmp-copilot is available
+        local blink_copilot_ok = pcall(require, "blink-cmp-copilot")
+        table.insert(msgs, "blink-cmp-copilot: " .. (blink_copilot_ok and "✅" or "❌"))
+
+        -- Check toggle state
+        local enabled = vim.g.blink_copilot_enabled ~= false
+        table.insert(msgs, "Copilot toggle: " .. (enabled and "✅ enabled" or "🚫 disabled"))
+
+        -- Check if copilot is authenticated
+        if copilot_loaded then
+          local auth_status = "unknown"
+          local ok, result = pcall(function()
+            return require("copilot.api").status.data.status
+          end)
+          if ok then
+            auth_status = result
+          end
+          table.insert(msgs, "Copilot auth status: " .. auth_status)
+        end
+
+        vim.notify(table.concat(msgs, "\n"), vim.log.levels.INFO)
+      end,
+      desc = "Debug Copilot status",
       mode = "n",
     },
   },
