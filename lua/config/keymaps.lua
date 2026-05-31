@@ -4,6 +4,12 @@
 
 vim.keymap.del("n", "<leader><leader>")
 vim.keymap.set("n", "<leader>fr", "<cmd>Telescope find_files<CR>", { desc = "Find Files (Root Dir)" })
+-- Exit terminal mode using a single Escape press
+vim.keymap.set("t", "<C-q>", [[<C-\><C-n>]], { desc = "Terminal Normal Mode" })
+vim.keymap.set("t", "<C-h>", [[<C-\><C-n><C-w>h]])
+vim.keymap.set("t", "<C-j>", [[<C-\><C-n><C-w>j]])
+vim.keymap.set("t", "<C-k>", [[<C-\><C-n><C-w>k]])
+vim.keymap.set("t", "<C-l>", [[<C-\><C-n><C-w>l]])
 
 -- Toggle Copilot suggestions (autocompletions) without affecting Copilot Chat
 _G.copilot_suggestions_enabled = true
@@ -50,5 +56,5 @@ vim.keymap.del("n", "<leader>ft")
 vim.keymap.del("n", "<leader>fT")
 -- Open terminal
 vim.keymap.set("n", "<leader>ct", function()
-  require("lazyvim.util").terminal(nil, { cwd = require("lazyvim.util").root() })
+  require("snacks").terminal(nil, { cwd = LazyVim.root() })
 end, { desc = "Terminal (Root Dir)" })
