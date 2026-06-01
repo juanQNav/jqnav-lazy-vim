@@ -9,14 +9,14 @@ return {
     version = "*", -- Use the latest release instead of the latest commit (recommended)
     lazy = true, -- Don't load immediately
     ft = "markdown", -- También cargar con cualquier archivo markdown
-    cmd = { "ObsidianOpen", "ObsidianQuickSwitch", "ObsidianSearch" },
+    cmd = { "Obsidian" }, -- Single command with subcommands (legacy_commands = false)
     keys = {
-      { "<leader>oo", "<cmd>ObsidianQuickSwitch<cr>", desc = "Obsidian Quick Switch" },
-      { "<leader>os", "<cmd>ObsidianSearch<cr>", desc = "Obsidian Search" },
-      { "<leader>oa", "<cmd>ObsidianOpen<cr>", desc = "Obsidian Open Vault" },
+      { "<leader>oo", "<cmd>Obsidian quick_switch<cr>", desc = "Obsidian Quick Switch" },
+      { "<leader>os", "<cmd>Obsidian search<cr>", desc = "Obsidian Search" },
+      { "<leader>oa", "<cmd>Obsidian open<cr>", desc = "Obsidian Open Vault" },
       -- Custom keymaps (replacing deprecated mappings)
-      { "<leader>of", "<cmd>ObsidianFollowLink<cr>", desc = "Obsidian Follow Link", ft = "markdown" },
-      { "<leader>od", "<cmd>ObsidianToggleCheckbox<cr>", desc = "Obsidian Toggle Checkbox", ft = "markdown" },
+      { "<leader>of", "<cmd>Obsidian follow_link<cr>", desc = "Obsidian Follow Link", ft = "markdown" },
+      { "<leader>od", "<cmd>Obsidian toggle_checkbox<cr>", desc = "Obsidian Toggle Checkbox", ft = "markdown" },
       {
         "<leader>on",
         function()
