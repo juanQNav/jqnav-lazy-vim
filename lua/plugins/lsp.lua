@@ -50,6 +50,7 @@ return {
             "shfmt",
             "tree-sitter-cli",
             "jupytext",
+            "google-java-format",
           },
         },
       },
@@ -83,22 +84,6 @@ return {
       local function root_pattern(...)
         return util.root_pattern(...)
       end
-
-      -- Common LSP attach behavior
-      vim.api.nvim_create_autocmd("LspAttach", {
-        callback = function(event)
-          local function map(keys, func, desc)
-            vim.keymap.set("n", keys, func, {
-              buffer = event.buf,
-              desc = "LSP: " .. desc,
-            })
-          end
-
-          map("gd", vim.lsp.buf.definition, "Go to definition")
-          map("gD", vim.lsp.buf.type_definition, "Go to type definition")
-          map("<leader>dq", vim.diagnostic.setqflist, "Diagnostics quickfix")
-        end,
-      })
 
       -- =====================
       -- LSP CONFIGURATIONS
