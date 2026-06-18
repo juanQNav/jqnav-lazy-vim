@@ -45,6 +45,7 @@ return {
       tex = { "latexindent" },
       -- Explicity exclude Python
       python = has_ruff() and { "ruff_format", "ruff_organize_imports" } or {},
+      java = { "google-java-format" },
     })
 
     -- cofigure prettier to use the project configuration file
