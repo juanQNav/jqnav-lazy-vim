@@ -6,6 +6,7 @@ vim.keymap.del("n", "<leader><leader>")
 vim.keymap.set("n", "<leader>fr", "<cmd>Telescope find_files<CR>", { desc = "Find Files (Root Dir)" })
 -- Exit terminal mode using a single Escape press
 vim.keymap.set("t", "<C-q>", [[<C-\><C-n>]], { desc = "Terminal Normal Mode" })
+vim.keymap.set("i", "<C-q>", "<Esc>", { desc = "Exit insert mode" })
 vim.keymap.set("t", "<C-h>", [[<C-\><C-n><C-w>h]])
 vim.keymap.set("t", "<C-j>", [[<C-\><C-n><C-w>j]])
 vim.keymap.set("t", "<C-k>", [[<C-\><C-n><C-w>k]])
