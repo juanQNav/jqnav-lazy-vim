@@ -59,3 +59,12 @@ vim.keymap.del("n", "<leader>fT")
 vim.keymap.set("n", "<leader>ct", function()
   require("snacks").terminal(nil, { cwd = LazyVim.root() })
 end, { desc = "Terminal (Root Dir)" })
+
+-- Del default keypam for zen mode
+vim.keymap.del("n", "<leader>uz")
+-- del default keymap for zoom mode
+vim.keymap.del("n", "<leader>uZ")
+-- use zoom mode with <leader>uz
+vim.keymap.set("n", "<leader>uz", function()
+  Snacks.zen.zoom()
+end, { desc = "Toggle Zoom Mode" })
