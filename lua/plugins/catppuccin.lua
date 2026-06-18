@@ -5,7 +5,7 @@ return {
   lazy = false,
   config = function()
     -- Keep transparency state globally so it persists during the session
-    vim.g.catppuccin_transparent_background = vim.g.catppuccin_transparent_background or false
+    vim.g.catppuccin_transparent_background = vim.g.catppuccin_transparent_background or true
 
     -- Apply theme using current transparency state
     local function apply_catppuccin()
