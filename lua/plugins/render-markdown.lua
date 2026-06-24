@@ -8,10 +8,13 @@ return {
   config = function()
     require("render-markdown").setup({
       enabled = true,
+      anti_conceal = {
+        enabled = false,
+      },
       latex = {
         enabled = true,
         converter = "latex2text",
-        highlight = "RenderMarkdownMath", -- String, no table
+        -- highlight = "RenderMarkdownMath", -- String, no table
       },
       checkbox = {
         unchecked = {
