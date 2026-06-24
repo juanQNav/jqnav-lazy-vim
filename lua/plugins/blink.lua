@@ -67,7 +67,7 @@ return {
           -- DO NOT define them here to avoid conflicts
         },
         per_filetype = {
-          markdown = { "lsp", "obsidian", "obsidian_new", "obsidian_tags", "snippets", "buffer", "path" },
+          -- markdown = { "lsp", "obsidian", "obsidian_new", "obsidian_tags", "snippets", "buffer", "path" },
           codecompanion = { "codecompanion" },
         },
       },
