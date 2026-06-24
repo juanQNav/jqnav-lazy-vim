@@ -2,69 +2,161 @@
 
 return {
   {
-    -- Plugin: obsidian.nvim (Community Fork with blink.cmp support)
-    -- URL: https://github.com/obsidian-nvim/obsidian.nvim
-    -- Description: A Neovim plugin for integrating with Obsidian, a powerful knowledge base that works on top of a local folder of plain text Markdown files.
-    "obsidian-nvim/obsidian.nvim", -- Using the community fork with blink support
-    version = "*", -- Use the latest release instead of the latest commit (recommended)
-    lazy = true, -- Don't load immediately
-    ft = "markdown", -- También cargar con cualquier archivo markdown
-    cmd = { "Obsidian" }, -- Single command with subcommands (legacy_commands = false)
+    "obsidian-nvim/obsidian.nvim",
+    version = "*",
+    lazy = true,
+    ft = "markdown",
+    cmd = { "Obsidian" },
+
     keys = {
       { "<leader>oo", "<cmd>Obsidian quick_switch<cr>", desc = "Obsidian Quick Switch" },
       { "<leader>os", "<cmd>Obsidian search<cr>", desc = "Obsidian Search" },
       { "<leader>oa", "<cmd>Obsidian open<cr>", desc = "Obsidian Open Vault" },
-      -- Custom keymaps (replacing deprecated mappings)
-      { "<leader>of", "<cmd>Obsidian follow_link<cr>", desc = "Obsidian Follow Link", ft = "markdown" },
-      { "<leader>od", "<cmd>Obsidian toggle_checkbox<cr>", desc = "Obsidian Toggle Checkbox", ft = "markdown" },
+      {
+        "<leader>of",
+        "<cmd>Obsidian follow_link<cr>",
+        desc = "Obsidian Follow Link",
+        ft = "markdown",
+      },
+
+      {
+        "<leader>od",
+        "<cmd>Obsidian toggle_checkbox<cr>",
+        desc = "Obsidian Toggle Checkbox",
+        ft = "markdown",
+      },
+
+      -- =========================
+      -- NEW NOTE FLOW (FIXED)
+      -- =========================
       {
         "<leader>on",
         function()
-          local title = vim.fn.input("Note title: ")
-          if title ~= "" then
-            local obsidian = require("obsidian").get_client()
+          local Obsidian = require("obsidian")
 
-            -- Generate note ID using your custom function
-            local note_id = tostring(os.time()) .. "-" .. title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
+          local vault_path = vim.fn.expand("~/Exocortex")
+          local notes_dir = vault_path .. "/limbus"
+          local template_dir = vault_path .. "/templates"
 
-            -- Create the note path
-            local note_path = obsidian.dir / obsidian.opts.notes_subdir / (note_id .. ".md")
+          -- local ID generator (no Obsidian.opts dependency)
+          local function note_id_func(title)
+            local suffix = ""
 
-            -- Create frontmatter
-            local frontmatter = {
-              id = note_id,
-              aliases = { title },
-              tags = {},
-            }
-
-            -- Convert frontmatter to YAML string
-            local yaml_lines = { "---" }
-            table.insert(yaml_lines, "id: " .. frontmatter.id)
-            table.insert(yaml_lines, "aliases:")
-            for _, alias in ipairs(frontmatter.aliases) do
-              table.insert(yaml_lines, "  - " .. alias)
-            end
-            table.insert(yaml_lines, "tags:")
-            table.insert(yaml_lines, "---")
-            table.insert(yaml_lines, "")
-            table.insert(yaml_lines, "# " .. title)
-
-            -- Create the file with frontmatter
-            local file = io.open(tostring(note_path), "w")
-            if file then
-              file:write(table.concat(yaml_lines, "\n") .. "\n")
-              file:close()
-
-              -- Open the new note
-              vim.cmd("edit " .. tostring(note_path))
-              vim.notify("✓ Created note: " .. title, vim.log.levels.INFO)
+            if title and title ~= "" then
+              suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
             else
-              vim.notify("Error creating note", vim.log.levels.ERROR)
+              suffix = tostring(math.random(1000, 9999))
             end
+
+            return tostring(os.time()) .. "-" .. suffix
           end
+
+          vim.ui.select({ "Default (Zettelkasten)", "Template" }, {
+            prompt = "¿Cómo quieres crear la nota?",
+          }, function(choice)
+            if not choice then
+              return
+            end
+
+            local title = vim.fn.input("Note title: ")
+            if not title or title == "" then
+              return
+            end
+
+            local note_id = note_id_func(title)
+
+            -- =========================
+            -- TEMPLATE MODE
+            -- =========================
+            if choice == "Template" then
+              local scan = require("plenary.scandir")
+
+              local templates = scan.scan_dir(template_dir, {
+                depth = 1,
+                add_dirs = false,
+              })
+
+              if not templates or vim.tbl_isempty(templates) then
+                vim.notify("No templates found in " .. template_dir, vim.log.levels.ERROR)
+                return
+              end
+
+              local template_names = {}
+              local template_map = {}
+
+              for _, path in ipairs(templates) do
+                local name = vim.fn.fnamemodify(path, ":t")
+                template_names[#template_names + 1] = name
+                template_map[name] = path
+              end
+
+              vim.ui.select(template_names, {
+                prompt = "Selecciona template",
+              }, function(selected_template)
+                if not selected_template then
+                  return
+                end
+
+                local note_path = notes_dir .. "/" .. note_id .. ".md"
+                local template_path = template_map[selected_template]
+
+                -- 🔥 FIX: actually load template file
+                local content = table.concat(vim.fn.readfile(template_path), "\n")
+
+                -- 🔧 template engine
+                content = content:gsub("{%s*{%s*id%s*}%s*}", note_id)
+                content = content:gsub("{%s*{%s*title%s*}%s*}", title)
+                content = content:gsub("{%s*{%s*date%s*}%s*}", os.date("%Y-%m-%d"))
+
+                local file = io.open(note_path, "w")
+                if not file then
+                  vim.notify("Error creando nota", vim.log.levels.ERROR)
+                  return
+                end
+
+                file:write(content)
+                file:close()
+
+                vim.cmd("edit " .. note_path)
+                vim.notify("✓ Created from template: " .. selected_template)
+              end)
+
+            -- =========================
+            -- MANUAL MODE (ZETTELKASTEN)
+            -- =========================
+            else
+              local note_path = notes_dir .. "/" .. note_id .. ".md"
+
+              local yaml = {
+                "---",
+                "id: " .. note_id,
+                "aliases:",
+                "  - " .. title,
+                "tags:",
+                "---",
+                "",
+                "# " .. title,
+                "",
+              }
+
+              local file = io.open(note_path, "w")
+              if file then
+                file:write(table.concat(yaml, "\n"))
+                file:close()
+                vim.cmd("edit " .. note_path)
+                vim.notify("✓ Zettelkasten note created")
+              else
+                vim.notify("Error creando nota", vim.log.levels.ERROR)
+              end
+            end
+          end)
         end,
-        desc = "Obsidian New Note",
+        desc = "Obsidian New Note (template aware)",
       },
+
+      -- =========================
+      -- MOVE NOTE
+      -- =========================
       {
         "<leader>om",
         function()
@@ -78,14 +170,8 @@ return {
           end
 
           local vault_path = note.path:parent():parent()
-
           local scan = require("plenary.scandir")
 
-          -- Exocortex folders
-          local exocortex_folders = {
-            limbus = true,
-            templates = true,
-          }
           local existing_folders = {}
 
           local subdirs = scan.scan_dir(tostring(vault_path), {
@@ -98,70 +184,35 @@ return {
             table.insert(existing_folders, relative)
           end
 
-          -- Scan for existing folders within Exocortex structure
-          for _, base_folder in pairs(exocortex_folders) do
-            local base_path = vault_path / base_folder
-            if base_path:exists() then
-              table.insert(existing_folders, base_folder)
-
-              -- Scan subdirectories
-              local subdirs = scan.scan_dir(tostring(base_path), {
-                only_dirs = true,
-                depth = 2,
-              })
-
-              for _, subdir in ipairs(subdirs) do
-                local relative = subdir:gsub(tostring(vault_path) .. "/", "")
-                local folder_name = relative:match("^([^/]+)")
-                if not exocortex_folders[folder_name] then
-                  table.insert(existing_folders, relative)
-                end
-              end
-            end
-          end
-
-          -- Sort folders alphabetically
           table.sort(existing_folders)
-          -- Add option to create new folder at the beginning
+
           local options = vim.deepcopy(existing_folders)
-          vim.list_extend(options, { "  Create new folder..." })
+          table.insert(options, "  Create new folder...")
 
           vim.ui.select(options, {
             prompt = "Move note to:",
-            format_item = function(item)
-              if item == "  Create new folder..." then
-                return item
-              end
-              return "  " .. item
-            end,
           }, function(choice)
             if not choice then
               return
             end
 
             local function move_note(target_folder)
-              local new_dir = vault_path / target_folder
-              new_dir:mkdir({ parents = true, exists_ok = true })
+              local new_dir = vault_path .. "/" .. target_folder
+              vim.fn.mkdir(new_dir, "p")
 
               local old_path = note.path
-              local new_path = new_dir / old_path.name
+              local new_path = new_dir .. "/" .. old_path:name()
 
-              -- Check if file already exists at destination
-              if vim.loop.fs_stat(tostring(new_path)) then
-                vim.notify(string.format("File already exists at %s", target_folder), vim.log.levels.ERROR)
-                return
-              end
-
-              vim.loop.fs_rename(tostring(old_path), tostring(new_path))
+              vim.loop.fs_rename(tostring(old_path), new_path)
               vim.cmd("bdelete")
-              vim.cmd("edit " .. tostring(new_path))
+              vim.cmd("edit " .. new_path)
 
-              vim.notify(string.format("✓ Moved to %s", target_folder), vim.log.levels.INFO)
+              vim.notify("✓ Moved to " .. target_folder)
             end
 
             if choice == "  Create new folder..." then
               vim.ui.input({
-                prompt = "New folder path (e.g., projects/myproject): ",
+                prompt = "New folder path:",
               }, function(new_folder)
                 if new_folder and new_folder ~= "" then
                   move_note(new_folder)
@@ -175,17 +226,147 @@ return {
         desc = "Obsidian Move Note",
         ft = "markdown",
       },
+
+      -- =========================
+      -- TODO → ZETTELKASTEN NOTE + LINK
+      -- =========================
+      {
+        "<leader>oc",
+        function()
+          local line = vim.api.nvim_get_current_line()
+          local todo_text = line:match("^%- %[ %] #TODO:%s*(.+)$")
+
+          if not todo_text or todo_text == "" then
+            vim.notify("No #TODO: found on current line", vim.log.levels.WARN)
+            return
+          end
+
+          local title = vim.trim(todo_text)
+          local vault_path = vim.fn.expand("~/Exocortex")
+          local notes_dir = vault_path .. "/limbus"
+          local template_dir = vault_path .. "/templates"
+
+          -- same ID strategy as <leader>on Zettelkasten mode
+          local suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
+          local note_id = tostring(os.time()) .. "-" .. suffix
+
+          local note_path = notes_dir .. "/" .. note_id .. ".md"
+
+          vim.ui.select({ "Default (Zettelkasten)", "Template" }, {
+            prompt = "¿Cómo quieres crear la nota?",
+          }, function(choice)
+            if not choice then
+              return
+            end
+
+            local function finalize()
+              -- replace the TODO line with a checkbox + wikilink
+              local link = "[[" .. note_id .. "|" .. title .. "]]"
+              vim.api.nvim_set_current_line("- [ ] " .. link)
+              vim.notify("✓ Note created from TODO: " .. title)
+            end
+
+            -- =========================
+            -- TEMPLATE MODE
+            -- =========================
+            if choice == "Template" then
+              local scan = require("plenary.scandir")
+
+              local templates = scan.scan_dir(template_dir, {
+                depth = 1,
+                add_dirs = false,
+              })
+
+              if not templates or vim.tbl_isempty(templates) then
+                vim.notify("No templates found in " .. template_dir, vim.log.levels.ERROR)
+                return
+              end
+
+              local template_names = {}
+              local template_map = {}
+
+              for _, path in ipairs(templates) do
+                local name = vim.fn.fnamemodify(path, ":t")
+                template_names[#template_names + 1] = name
+                template_map[name] = path
+              end
+
+              vim.ui.select(template_names, {
+                prompt = "Selecciona template",
+              }, function(selected_template)
+                if not selected_template then
+                  return
+                end
+
+                local template_path = template_map[selected_template]
+
+                -- load template file
+                local content = table.concat(vim.fn.readfile(template_path), "\n")
+
+                -- template engine
+                content = content:gsub("{%s*{%s*id%s*}%s*}", note_id)
+                content = content:gsub("{%s*{%s*title%s*}%s*}", title)
+                content = content:gsub("{%s*{%s*date%s*}%s*}", os.date("%Y-%m-%d"))
+
+                local file = io.open(note_path, "w")
+                if not file then
+                  vim.notify("Error creating note", vim.log.levels.ERROR)
+                  return
+                end
+
+                file:write(content)
+                file:close()
+
+                vim.cmd("edit " .. note_path)
+                finalize()
+              end)
+
+            -- =========================
+            -- DEFAULT MODE (ZETTELKASTEN)
+            -- =========================
+            else
+              local yaml = {
+                "---",
+                "id: " .. note_id,
+                "aliases:",
+                "  - " .. title,
+                "tags:",
+                "---",
+                "",
+                "# " .. title,
+                "",
+              }
+
+              local file = io.open(note_path, "w")
+              if not file then
+                vim.notify("Error creating note", vim.log.levels.ERROR)
+                return
+              end
+
+              file:write(table.concat(yaml, "\n"))
+              file:close()
+
+              vim.cmd("edit " .. note_path)
+              finalize()
+            end
+          end)
+        end,
+        desc = "Obsidian TODO → Zettelkasten note + link",
+        ft = "markdown",
+      },
+
+      -- =========================
+      -- TODO TOGGLE
+      -- =========================
       {
         "<leader>ot",
         function()
           local line = vim.api.nvim_get_current_line()
 
           if line:match("^%- %[ %] #TODO:") then
-            local new_line = line:gsub("^%- %[ %] #TODO:", "- [ ]", 1)
-            vim.api.nvim_set_current_line(new_line)
+            vim.api.nvim_set_current_line(line:gsub("^%- %[ %] #TODO:", "- [ ]", 1))
           elseif line:match("^%- %[ %]") then
-            local new_line = line:gsub("^%- %[ %]", "- [ ] #TODO:", 1)
-            vim.api.nvim_set_current_line(new_line)
+            vim.api.nvim_set_current_line(line:gsub("^%- %[ %]", "- [ ] #TODO:", 1))
           else
             vim.api.nvim_set_current_line("- [ ] #TODO: " .. line)
           end
@@ -194,111 +375,71 @@ return {
         ft = "markdown",
       },
     },
+
     event = {
-      -- Load when opening markdown files in the Obsidian workspace
       "BufReadPre " .. vim.fn.expand("~") .. "/Exocortex/**.md",
       "BufNewFile " .. vim.fn.expand("~") .. "/Exocortex/**.md",
     },
+
     dependencies = {
-      -- Dependency: plenary.nvim
-      -- URL: https://github.com/nvim-lua/plenary.nvim
-      -- Description: A Lua utility library for Neovim.
       "nvim-lua/plenary.nvim",
-      -- Dependency: blink.cmp
-      -- URL: https://github.com/saghen/blink.cmp
-      -- Description: A completion plugin for neovim.
       "saghen/blink.cmp",
     },
 
     opts = {
-      -- Disable deprecated legacy commands
       legacy_commands = false,
-      -- Define workspaces for Obsidian
+
       workspaces = {
         {
-          name = "Exocortex", -- Name of the workspace
-          path = "~/Exocortex", -- Path to the notes directory
+          name = "Exocortex",
+          path = "~/Exocortex",
         },
       },
-      -- UI settings
+
       ui = {
-        enable = true, -- Keep UI enhancements enabled
-        -- Disable tag highlighting specifically
-        hl_groups = {
-          ObsidianTag = { fg = "NONE", bg = "NONE", bold = false, italic = false },
-        },
+        enable = false,
       },
-      -- Completion settings
-      completion = {
-        blink = true, -- Enable blink.cmp integration (community fork feature)
-        min_chars = 1, -- Start suggesting after 1 character
-      },
-      -- Checkbox
+
       checkbox = {
         enable = true,
         create_new = true,
-        order = {
-          " ",
-          "x",
-          "!",
-          ">",
-          "~",
-        },
+        order = { " ", "x", "!", ">", "~" },
       },
-      notes_subdir = "limbus", -- Subdirectory for notes
-      new_notes_location = "limbus", -- Location for new notes
 
-      -- Settings for attachments
+      notes_subdir = "limbus",
+      new_notes_location = "limbus",
+
       attachments = {
-        folder = "files", -- Folder for image attachments
+        folder = "files",
       },
 
-      -- Settings for daily notes
       daily_notes = {
-        template = "note", -- Template for daily notes
+        template = "note",
       },
 
-      -- Function to generate frontmatter for notes
       frontmatter = {
         func = function(note)
-          -- This is equivalent to the default frontmatter function.
-          local out = { id = note.id, aliases = note.aliases, tags = note.tags }
+          local out = {
+            id = note.id,
+            aliases = note.aliases,
+            tags = note.tags,
+          }
 
-          -- `note.metadata` contains any manually added fields in the frontmatter.
-          -- So here we just make sure those fields are kept in the frontmatter.
-          if note.metadata ~= nil and not vim.tbl_isempty(note.metadata) then
+          if note.metadata and not vim.tbl_isempty(note.metadata) then
             for k, v in pairs(note.metadata) do
               out[k] = v
             end
           end
+
           return out
         end,
       },
 
-      -- Function to generate note IDs
-      note_id_func = function(title)
-        -- Create note IDs in a Zettelkasten format with a timestamp and a suffix.
-        -- In this case a note with the title 'My new note' will be given an ID that looks
-        -- like '1657296016-my-new-note', and therefore the file name '1657296016-my-new-note.md'
-        local suffix = ""
-        if title ~= nil then
-          -- If title is given, transform it into valid file name.
-          suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
-        else
-          -- If title is nil, just add 4 random uppercase letters to the suffix.
-          for _ = 1, 4 do
-            suffix = suffix .. string.char(math.random(65, 90))
-          end
-        end
-        return tostring(os.time()) .. "-" .. suffix
-      end,
-
-      -- Settings for templates
       templates = {
-        subdir = "templates", -- Subdirectory for templates
-        date_format = "%Y-%m-%d-%a", -- Date format for templates
-        gtime_format = "%H:%M", -- Time format for templates
-        tags = "", -- Default tags for templates
+        subdir = "templates",
+        date_format = "%Y-%m-%d-%a",
+        gtime_format = "%H:%M",
+        tags = "",
       },
     },
   },
