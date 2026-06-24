@@ -35,6 +35,7 @@ mv jqnav-lazy-vim ~/.config/nvim/
 11. curl
 12. opencode
 13. github cli
+14. pylatexenc
 
 ## Plugins Summary
 
