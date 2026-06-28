@@ -1,3 +1,11 @@
+local opencode_cmd = "opencode --port --agent gentle-orchestrator"
+local snacks_terminal_opts = {
+  win = {
+    position = "right",
+    enter = false,
+  },
+}
+
 return {
   "NickvanDyke/opencode.nvim",
   dependencies = {
@@ -7,9 +15,9 @@ return {
     {
       "<leader>aoa",
       function()
-        require("opencode").toggle()
+        require("snacks.terminal").toggle(opencode_cmd, snacks_terminal_opts)
       end,
-      mode = { "n" },
+      mode = { "n", "x" },
       desc = "Toggle OpenCode",
     },
     {
@@ -35,6 +43,19 @@ return {
       end,
       mode = { "n", "x" },
       desc = "OpenCode ask with context",
+    },
+    -- custom promt for notebooks with mcp notebooklm
+    {
+      "<leader>aot",
+      function()
+        require("opencode").ask(
+          "@this:  Read AGENTS.md for all conventions (note IDs, wiki links, templetes)."
+            .. "Complete only the TODOs from selection. The topic to be covered is: ",
+          { submit = false }
+        )
+      end,
+      mode = { "n", "x" },
+      desc = "OpenCode complete TODOs from selection with NotebookLM",
     },
     {
       "<leader>aob",
@@ -104,12 +125,10 @@ return {
   },
   config = function()
     vim.g.opencode_opts = {
-      provider = {
-        snacks = {
-          win = {
-            position = "left",
-          },
-        },
+      server = {
+        start = function()
+          require("snacks.terminal").open(opencode_cmd, snacks_terminal_opts)
+        end,
       },
     }
     vim.o.autoread = true
