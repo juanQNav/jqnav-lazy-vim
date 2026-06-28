@@ -197,13 +197,14 @@ return {
             end
 
             local function move_note(target_folder)
-              local new_dir = vault_path .. "/" .. target_folder
+              local new_dir = tostring(vault_path) .. "/" .. target_folder
               vim.fn.mkdir(new_dir, "p")
 
-              local old_path = note.path
-              local new_path = new_dir .. "/" .. old_path:name()
+              local old_path = tostring(note.path)
+              local fname = vim.fn.fnamemodify(old_path, ":t")
+              local new_path = new_dir .. "/" .. fname
 
-              vim.loop.fs_rename(tostring(old_path), new_path)
+              vim.loop.fs_rename(old_path, new_path)
               vim.cmd("bdelete")
               vim.cmd("edit " .. new_path)
 
