@@ -44,19 +44,6 @@ return {
       mode = { "n", "x" },
       desc = "OpenCode ask with context",
     },
-    -- custom promt for notebooks with mcp notebooklm
-    {
-      "<leader>aot",
-      function()
-        require("opencode").ask(
-          "@this:  Read AGENTS.md for all conventions (note IDs, wiki links, templetes)."
-            .. "Complete only the TODOs from selection. The topic to be covered is: ",
-          { submit = false }
-        )
-      end,
-      mode = { "n", "x" },
-      desc = "OpenCode complete TODOs from selection with NotebookLM",
-    },
     {
       "<leader>aob",
       function()
@@ -65,62 +52,40 @@ return {
       mode = { "n", "x" },
       desc = "OpenCode ask about buffer",
     },
+    -- custom promt for notebooks with mcp notebooklm
     {
-      "<leader>aop",
-      function()
-        require("opencode").prompt("@this", { submit = true })
-      end,
+      "<leader>aon",
       mode = { "n", "x" },
-      desc = "OpenCode prompt",
-    },
-    -- Built-in prompts
-    {
-      "<leader>aope",
-      function()
-        require("opencode").prompt("explain", { submit = true })
-      end,
-      mode = { "n", "x" },
-      desc = "OpenCode explain",
+      desc = "OpenCode with NotebookLM",
     },
     {
-      "<leader>aopf",
+      "<leader>aont",
       function()
-        require("opencode").prompt("fix", { submit = true })
+        require("opencode").ask(
+          "@this:  Read AGENTS.md for all conventions (note IDs, wiki links, templetes)."
+            .. "Complete only the TODOs from selection. The topic to be covered is: ",
+          { submit = false }
+        )
       end,
       mode = { "n", "x" },
-      desc = "OpenCode fix",
+      desc = "OpenCode complete TODOs with NotebookLM",
+    },
+    -- custom promt for git
+    {
+      "<leader>aog",
+      mode = { "n", "x" },
+      desc = "OpenCode git",
     },
     {
-      "<leader>aopd",
+      "<leader>aogc",
       function()
-        require("opencode").prompt("diagnose", { submit = true })
+        require("opencode").ask(
+          "Review the contents in the staging area and make an appropiate conventional commit.",
+          { submit = false }
+        )
       end,
       mode = { "n", "x" },
-      desc = "OpenCode diagnose",
-    },
-    {
-      "<leader>aopr",
-      function()
-        require("opencode").prompt("review", { submit = true })
-      end,
-      mode = { "n", "x" },
-      desc = "OpenCode review",
-    },
-    {
-      "<leader>aopt",
-      function()
-        require("opencode").prompt("test", { submit = true })
-      end,
-      mode = { "n", "x" },
-      desc = "OpenCode test",
-    },
-    {
-      "<leader>aopo",
-      function()
-        require("opencode").prompt("optimize", { submit = true })
-      end,
-      mode = { "n", "x" },
-      desc = "OpenCode optimize",
+      desc = "OpenCode git commit",
     },
   },
   config = function()
