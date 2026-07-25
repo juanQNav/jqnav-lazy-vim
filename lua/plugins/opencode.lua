@@ -52,6 +52,15 @@ return {
       mode = { "n", "x" },
       desc = "OpenCode ask about buffer",
     },
+    -- custom ruquest docstring
+    {
+      "<leader>aod",
+      function()
+        require("opencode").ask("@this: Complete the missing docstring in function: ", { submit = true })
+      end,
+      mode = { "n", "x" },
+      desc = "OPencode complete missing docstring",
+    },
     -- custom promt for notebooks with mcp notebooklm
     {
       "<leader>aon",
@@ -86,6 +95,17 @@ return {
       end,
       mode = { "n", "x" },
       desc = "OpenCode git commit",
+    },
+    {
+      "<leader>aogf",
+      function()
+        require("opencode").ask(
+          "Make branch, commit, push and PR for the changes in the staging area. The PR should be ready to merge.",
+          { submit = false }
+        )
+      end,
+      mode = { "n", "x" },
+      desc = "OpenCode git full",
     },
   },
   config = function()
