@@ -31,7 +31,7 @@ return {
     {
       "<leader>aoi",
       function()
-        require("opencode").ask("", { submit = true })
+        require("opencode").ask("")
       end,
       mode = { "n", "x" },
       desc = "OpenCode ask",
@@ -39,7 +39,7 @@ return {
     {
       "<leader>aoI",
       function()
-        require("opencode").ask("@this: ", { submit = true })
+        require("opencode").ask("@this: ")
       end,
       mode = { "n", "x" },
       desc = "OpenCode ask with context",
@@ -47,7 +47,7 @@ return {
     {
       "<leader>aob",
       function()
-        require("opencode").ask("@file ", { submit = true })
+        require("opencode").ask("@file ")
       end,
       mode = { "n", "x" },
       desc = "OpenCode ask about buffer",
@@ -56,7 +56,7 @@ return {
     {
       "<leader>aod",
       function()
-        require("opencode").ask("@this: Complete the missing docstring in function: ", { submit = true })
+        require("opencode").ask("@this: Complete the missing docstring in function: ")
       end,
       mode = { "n", "x" },
       desc = "OPencode complete missing docstring",
@@ -72,8 +72,7 @@ return {
       function()
         require("opencode").ask(
           "@this:  Read AGENTS.md for all conventions (note IDs, wiki links, templetes)."
-            .. "Complete only the TODOs from selection. The topic to be covered is: ",
-          { submit = false }
+            .. "Complete only the TODOs from selection. The topic to be covered is: "
         )
       end,
       mode = { "n", "x" },
@@ -89,8 +88,7 @@ return {
       "<leader>aogc",
       function()
         require("opencode").ask(
-          "Review the contents in the staging area and make an appropiate conventional commit.",
-          { submit = false }
+          "Review the contents in the staging area and make an appropiate conventional commit."
         )
       end,
       mode = { "n", "x" },
@@ -100,8 +98,7 @@ return {
       "<leader>aogf",
       function()
         require("opencode").ask(
-          "Make branch, commit, push and PR for the changes in the staging area. The PR should be ready to merge.",
-          { submit = false }
+          "Make branch, commit, push and PR for the changes in the staging area. The PR should be ready to merge."
         )
       end,
       mode = { "n", "x" },
