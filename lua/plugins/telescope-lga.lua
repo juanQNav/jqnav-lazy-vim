@@ -6,6 +6,10 @@ return {
         "nvim-telescope/telescope-live-grep-args.nvim",
         version = "^1.0.0",
       },
+      {
+        "nvim-telescope/telescope-file-browser.nvim",
+        dependencies = { "nvim-lua/plenary.nvim", "nvim-telescope/telescope.nvim" },
+      },
     },
     config = function()
       local telescope = require("telescope")
@@ -13,6 +17,11 @@ return {
 
       telescope.setup({
         extensions = {
+          file_browser = {
+            path = "~/",
+            hidden = true,
+            respect_gitignore = true,
+          },
           live_grep_args = {
             auto_quoting = true,
             mappings = {
@@ -27,6 +36,7 @@ return {
       })
 
       telescope.load_extension("live_grep_args")
+      telescope.load_extension("file_browser")
 
       -- 🗝️  Atajo de teclado para Live Grep Args
       vim.keymap.set("n", "<leader>fg", function()
