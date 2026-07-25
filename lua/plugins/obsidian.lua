@@ -229,6 +229,63 @@ return {
       },
 
       -- =========================
+      -- COPY FOLDER OUTSIDE VAULT
+      -- =========================
+      {
+        "<leader>oC",
+        function()
+          local current_file = vim.api.nvim_buf_get_name(0)
+          if current_file == "" then
+            vim.notify("No file open", vim.log.levels.ERROR)
+            return
+          end
+
+          local src_dir = vim.fn.fnamemodify(current_file, ":h")
+          local folder_name = vim.fn.fnamemodify(src_dir, ":t")
+          local vault_path = vim.fn.expand("~/Exocortex")
+          local normalized_vault = vault_path:gsub("/+$", "")
+
+          if src_dir:sub(1, #normalized_vault) ~= normalized_vault then
+            vim.notify("Current file is not inside the vault", vim.log.levels.ERROR)
+            return
+          end
+
+          vim.ui.input({
+            prompt = "Copy TO (absolute path):",
+            default = "~/",
+          }, function(dst)
+            if not dst or dst == "" then
+              return
+            end
+
+            dst = vim.fn.expand(dst):gsub("/+$", "")
+
+            local normalized_dst = dst
+            if
+              normalized_dst == normalized_vault
+              or normalized_dst:sub(1, #normalized_vault + 1) == normalized_vault .. "/"
+            then
+              vim.notify("Destination must be outside the vault", vim.log.levels.ERROR)
+              return
+            end
+
+            local cmd = string.format("cp -r %s %s", vim.fn.shellescape(src_dir), vim.fn.shellescape(dst))
+            local result = vim.fn.system(cmd)
+            local exit_code = vim.v.shell_error
+
+            if exit_code == 0 then
+              local final_path = dst .. "/" .. folder_name
+              vim.notify("✓ Copied to " .. final_path)
+            else
+              vim.notify("✗ Copy failed: " .. result, vim.log.levels.ERROR)
+            end
+          end)
+        end,
+        desc = "Obsidian Copy Folder Outside Vault",
+        ft = "markdown",
+      },
+
+      -- =========================
       -- TODO → ZETTELKASTEN NOTE + LINK
       -- =========================
       {
