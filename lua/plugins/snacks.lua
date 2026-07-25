@@ -6,15 +6,17 @@ return {
       sources = {
         explorer = {
           -- Performance: disable heavy features for faster loading
-          git_status = true, -- skip git status computation
-          git_untracked = false, -- skip untracked files check
-          diagnostics = true, -- skip LSP diagnostics
-          watch = true, -- skip file system watcher
+          git_ignored = false, -- skip (false) git ignored files check
+          git_status = true, -- skip (false) git status computation
+          git_untracked = true, -- skip (false) untracked files check
+          diagnostics = true, -- skip (false) LSP diagnostics
+          watch = true, -- skip (false) file system watcher
           -- Keep tree view (fast enough)
           tree = true,
           formatters = {
             file = { filename_only = true },
           },
+          focus = "list",
         },
       },
     },
