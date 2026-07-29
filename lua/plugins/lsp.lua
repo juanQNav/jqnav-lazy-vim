@@ -36,12 +36,12 @@ return {
           automatic_installation = true,
         },
         config = function(_, opts)
-          require("mason-lspconfig").setup(opts)
-
-          -- pyright: venv-first with system fallback (must be AFTER mason-lspconfig.setup
-          -- so our custom cmd overrides the mason handler)
           local lspconfig = require("lspconfig")
           local util = require("lspconfig.util")
+
+          -- pyright: venv-first with system fallback
+          -- MUST be BEFORE mason-lspconfig.setup() so the mason handler captures
+          -- our custom cmd as its fallback (when mason doesn't have pyright installed)
           lspconfig.pyright.setup({
             capabilities = require("blink.cmp").get_lsp_capabilities({}, true),
             flags = { debounce_text_changes = 150 },
@@ -64,6 +64,8 @@ return {
               },
             },
           })
+
+          require("mason-lspconfig").setup(opts)
         end,
       },
       {
@@ -115,7 +117,7 @@ return {
       -- =====================
       -- LSP CONFIGURATIONS
       -- =====================
-      -- pyright is configured in mason-lspconfig config (after mason-lspconfig.setup)
+      -- pyright is configured in mason-lspconfig config (BEFORE mason-lspconfig.setup)
 
       lspconfig.lua_ls.setup({
         capabilities = capabilities,
