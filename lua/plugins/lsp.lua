@@ -104,12 +104,16 @@ return {
         capabilities = capabilities,
         flags = lsp_flags,
         root_dir = root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git"),
-        cmd = function(_, config)
-          local root = config and config.root_dir
-          if root then
-            local venv = root .. "/.venv/bin/pyright-langserver"
-            if vim.fn.executable(venv) == 1 then
-              return { venv, "--stdio" }
+        cmd = function()
+          local buf = vim.api.nvim_get_current_buf()
+          local file = vim.api.nvim_buf_get_name(buf)
+          if file ~= "" then
+            local root = util.root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git")(file)
+            if root then
+              local venv = root .. "/.venv/bin/pyright-langserver"
+              if vim.fn.executable(venv) == 1 then
+                return { venv, "--stdio" }
+              end
             end
           end
           local mason = get_mason_pyright()
