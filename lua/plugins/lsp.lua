@@ -107,24 +107,31 @@ return {
         cmd = function()
           local buf = vim.api.nvim_get_current_buf()
           local file = vim.api.nvim_buf_get_name(buf)
-          vim.notify(string.format("pyright cmd: buf=%s file=%s", buf, file), vim.log.levels.WARN)
+          local log = function(msg)
+            local f = io.open("/tmp/pyright-cmd.log", "a")
+            if f then f:write(msg .. "\n"):close() end
+          end
+          log(string.format("buf=%s file=%s", buf, file))
           if file ~= "" then
             local root = util.root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git")(file)
-            vim.notify(string.format("pyright cmd: root=%s", root or "nil"), vim.log.levels.WARN)
+            log(string.format("root=%s", root or "nil"))
             if root then
               local venv = root .. "/.venv/bin/pyright-langserver"
               local is_exec = vim.fn.executable(venv)
-              vim.notify(string.format("pyright cmd: venv=%s exec=%s", venv, is_exec), vim.log.levels.WARN)
+              log(string.format("venv=%s exec=%s", venv, is_exec))
               if is_exec == 1 then
+                log("USING VENV")
                 return { venv, "--stdio" }
               end
             end
           end
           local mason = get_mason_pyright()
-          vim.notify(string.format("pyright cmd: mason=%s exec=%s", mason or "nil", mason and vim.fn.executable(mason) or "skipped"), vim.log.levels.WARN)
+          log(string.format("mason=%s", mason or "nil"))
           if mason and vim.fn.executable(mason) == 1 then
+            log("USING MASON")
             return { "node", mason, "--stdio" }
           end
+          log("USING SYSTEM FALLBACK")
           return { "pyright-langserver", "--stdio" }
         end,
         settings = {
