@@ -93,6 +93,14 @@ return {
         capabilities = capabilities,
         flags = lsp_flags,
         root_dir = root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git"),
+        cmd = function(init_options, config)
+          local root = config.root_dir
+          local venv_pyright = root and root .. "/.venv/bin/pyright-langserver"
+          if venv_pyright and vim.fn.executable(venv_pyright) == 1 then
+            return { venv_pyright, "--stdio" }
+          end
+          return { "pyright-langserver", "--stdio" }
+        end,
         settings = {
           python = {
             analysis = {
