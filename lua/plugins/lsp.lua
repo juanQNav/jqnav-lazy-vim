@@ -19,7 +19,6 @@ return {
         "mason-org/mason-lspconfig.nvim",
         opts = {
           ensure_installed = {
-            "pyright",
             "lua_ls",
             "bashls",
             "cssls",
@@ -32,6 +31,7 @@ return {
             "ts_ls",
             "ruff",
             -- "r_language_server",
+            -- pyright handled by custom cmd (venv-first, then system/mason fallback)
           },
           automatic_installation = true,
         },
