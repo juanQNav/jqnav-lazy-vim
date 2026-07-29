@@ -31,40 +31,11 @@ return {
             "ts_ls",
             "ruff",
             -- "r_language_server",
-            -- pyright handled by custom cmd (venv-first, then system/mason fallback)
+            "pyright",
           },
           automatic_installation = true,
         },
         config = function(_, opts)
-          local lspconfig = require("lspconfig")
-          local util = require("lspconfig.util")
-
-          -- pyright: venv-first with system fallback
-          -- MUST be BEFORE mason-lspconfig.setup() so the mason handler captures
-          -- our custom cmd as its fallback (when mason doesn't have pyright installed)
-          lspconfig.pyright.setup({
-            capabilities = require("blink.cmp").get_lsp_capabilities({}, true),
-            flags = { debounce_text_changes = 150 },
-            root_dir = util.root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git"),
-            cmd = function(_, config)
-              local root = config.root_dir
-              local venv_pyright = root and root .. "/.venv/bin/pyright-langserver"
-              if venv_pyright and vim.fn.executable(venv_pyright) == 1 then
-                return { venv_pyright, "--stdio" }
-              end
-              return { "pyright-langserver", "--stdio" }
-            end,
-            settings = {
-              python = {
-                analysis = {
-                  typeCheckingMode = "basic",
-                  autoImportCompletions = true,
-                  useLibraryCodeForTypes = true,
-                },
-              },
-            },
-          })
-
           require("mason-lspconfig").setup(opts)
         end,
       },
@@ -117,7 +88,27 @@ return {
       -- =====================
       -- LSP CONFIGURATIONS
       -- =====================
-      -- pyright is configured in mason-lspconfig config (BEFORE mason-lspconfig.setup)
+
+      lspconfig.pyright.setup({
+        capabilities = capabilities,
+        flags = lsp_flags,
+        root_dir = root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git"),
+        on_new_config = function(new_config, root_dir)
+          local venv_pyright = root_dir .. "/.venv/bin/pyright-langserver"
+          if vim.fn.executable(venv_pyright) == 1 then
+            new_config.cmd = { venv_pyright, "--stdio" }
+          end
+        end,
+        settings = {
+          python = {
+            analysis = {
+              typeCheckingMode = "basic",
+              autoImportCompletions = true,
+              useLibraryCodeForTypes = true,
+            },
+          },
+        },
+      })
 
       lspconfig.lua_ls.setup({
         capabilities = capabilities,
