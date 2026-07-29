@@ -37,6 +37,33 @@ return {
         },
         config = function(_, opts)
           require("mason-lspconfig").setup(opts)
+
+          -- pyright: venv-first with system fallback (must be AFTER mason-lspconfig.setup
+          -- so our custom cmd overrides the mason handler)
+          local lspconfig = require("lspconfig")
+          local util = require("lspconfig.util")
+          lspconfig.pyright.setup({
+            capabilities = require("blink.cmp").get_lsp_capabilities({}, true),
+            flags = { debounce_text_changes = 150 },
+            root_dir = util.root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git"),
+            cmd = function(_, config)
+              local root = config.root_dir
+              local venv_pyright = root and root .. "/.venv/bin/pyright-langserver"
+              if venv_pyright and vim.fn.executable(venv_pyright) == 1 then
+                return { venv_pyright, "--stdio" }
+              end
+              return { "pyright-langserver", "--stdio" }
+            end,
+            settings = {
+              python = {
+                analysis = {
+                  typeCheckingMode = "basic",
+                  autoImportCompletions = true,
+                  useLibraryCodeForTypes = true,
+                },
+              },
+            },
+          })
         end,
       },
       {
@@ -88,29 +115,7 @@ return {
       -- =====================
       -- LSP CONFIGURATIONS
       -- =====================
-
-      lspconfig.pyright.setup({
-        capabilities = capabilities,
-        flags = lsp_flags,
-        root_dir = root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git"),
-        cmd = function(init_options, config)
-          local root = config.root_dir
-          local venv_pyright = root and root .. "/.venv/bin/pyright-langserver"
-          if venv_pyright and vim.fn.executable(venv_pyright) == 1 then
-            return { venv_pyright, "--stdio" }
-          end
-          return { "pyright-langserver", "--stdio" }
-        end,
-        settings = {
-          python = {
-            analysis = {
-              typeCheckingMode = "basic",
-              autoImportCompletions = true,
-              useLibraryCodeForTypes = true,
-            },
-          },
-        },
-      })
+      -- pyright is configured in mason-lspconfig config (after mason-lspconfig.setup)
 
       lspconfig.lua_ls.setup({
         capabilities = capabilities,
