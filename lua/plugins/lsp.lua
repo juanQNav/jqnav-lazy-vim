@@ -31,7 +31,7 @@ return {
             "ts_ls",
             "ruff",
             -- "r_language_server",
-            -- pyright handled manually below (venv-first, mason fallback)
+            "pyright",
           },
           automatic_installation = true,
         },
@@ -85,55 +85,15 @@ return {
         return util.root_pattern(...)
       end
 
-      -- Mason registry helper for pyright fallback
-      local function get_mason_pyright()
-        local ok, mason_registry = pcall(require, "mason-registry")
-        if ok and mason_registry.is_installed("pyright") then
-          local pkg = mason_registry.get_package("pyright")
-          return pkg:get_install_path()
-                .. "/node_modules/pyright/dist/pyright-langserver.js"
-        end
-      end
-
       -- =====================
       -- LSP CONFIGURATIONS
       -- =====================
 
-      -- Pyright: .venv first, then mason-installed, then system PATH
+      -- Pyright: uses mason wrapper script that checks .venv first
       lspconfig.pyright.setup({
         capabilities = capabilities,
         flags = lsp_flags,
         root_dir = root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git"),
-        cmd = function()
-          local buf = vim.api.nvim_get_current_buf()
-          local file = vim.api.nvim_buf_get_name(buf)
-          local log = function(msg)
-            local f = io.open("/tmp/pyright-cmd.log", "a")
-            if f then f:write(msg .. "\n"):close() end
-          end
-          log(string.format("buf=%s file=%s", buf, file))
-          if file ~= "" then
-            local root = util.root_pattern("pyproject.toml", "setup.py", "requirements.txt", "Pipfile", ".git")(file)
-            log(string.format("root=%s", root or "nil"))
-            if root then
-              local venv = root .. "/.venv/bin/pyright-langserver"
-              local is_exec = vim.fn.executable(venv)
-              log(string.format("venv=%s exec=%s", venv, is_exec))
-              if is_exec == 1 then
-                log("USING VENV")
-                return { venv, "--stdio" }
-              end
-            end
-          end
-          local mason = get_mason_pyright()
-          log(string.format("mason=%s", mason or "nil"))
-          if mason and vim.fn.executable(mason) == 1 then
-            log("USING MASON")
-            return { "node", mason, "--stdio" }
-          end
-          log("USING SYSTEM FALLBACK")
-          return { "pyright-langserver", "--stdio" }
-        end,
         settings = {
           python = {
             analysis = {
