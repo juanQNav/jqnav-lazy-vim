@@ -17,6 +17,7 @@ return {
             file = { filename_only = true },
           },
           focus = "list",
+          trash = true,
         },
       },
     },
