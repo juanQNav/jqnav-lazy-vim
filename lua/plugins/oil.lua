@@ -13,6 +13,7 @@ return {
         ["q"] = "actions.close",
         ["g."] = { "actions.toggle_hidden", mode = "n" },
       },
+      delete_to_trash = true,
     })
   end,
   -- directoryependencies = { "nvim-tree/nvim-web-devicons" }, -- use if you prefer nvim-web-devicons
