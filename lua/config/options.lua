@@ -5,3 +5,6 @@
 vim.diagnostic.config({
   virtual_text = true,
 })
+
+-- Spell check: English + Spanish
+vim.opt.spelllang = { "en", "es" }
