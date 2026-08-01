@@ -72,7 +72,7 @@ return {
               local scan = require("plenary.scandir")
 
               local templates = scan.scan_dir(template_dir, {
-                depth = 1,
+                depth = 2,
                 add_dirs = false,
               })
 
@@ -85,7 +85,7 @@ return {
               local template_map = {}
 
               for _, path in ipairs(templates) do
-                local name = vim.fn.fnamemodify(path, ":t")
+                local name = path:gsub(vim.pesc(template_dir) .. "/", "")
                 template_names[#template_names + 1] = name
                 template_map[name] = path
               end
@@ -100,7 +100,7 @@ return {
                 local note_path = notes_dir .. "/" .. note_id .. ".md"
                 local template_path = template_map[selected_template]
 
-                -- 🔥 FIX: actually load template file
+                --  FIX: actually load template file
                 local content = table.concat(vim.fn.readfile(template_path), "\n")
 
                 -- 🔧 template engine
@@ -331,7 +331,7 @@ return {
               local scan = require("plenary.scandir")
 
               local templates = scan.scan_dir(template_dir, {
-                depth = 1,
+                depth = 2,
                 add_dirs = false,
               })
 
@@ -344,7 +344,7 @@ return {
               local template_map = {}
 
               for _, path in ipairs(templates) do
-                local name = vim.fn.fnamemodify(path, ":t")
+                local name = path:gsub(vim.pesc(template_dir) .. "/", "")
                 template_names[#template_names + 1] = name
                 template_map[name] = path
               end
