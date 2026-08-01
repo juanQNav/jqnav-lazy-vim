@@ -48,6 +48,9 @@ return {
     opts = {
       preset = "classic",
       win = { border = "single" },
+      plugins = {
+        spelling = { enabled = false },
+      },
     },
   },
 
