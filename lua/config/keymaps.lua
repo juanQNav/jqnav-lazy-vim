@@ -39,7 +39,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
 -- Navigate to the next page in the PDF
 vim.keymap.set(
   "n",
-  "<leader>jj",
+  "<leader>pj",
   "<cmd>:lua require('pdfview.renderer').next_page()<CR>",
   { desc = "PDFview: Next page" }
 )
@@ -47,7 +47,7 @@ vim.keymap.set(
 -- Navigate to the previous page in the PDF
 vim.keymap.set(
   "n",
-  "<leader>kk",
+  "<leader>pk",
   "<cmd>:lua require('pdfview.renderer').previous_page()<CR>",
   { desc = "PDFview: Previous page" }
 )
@@ -75,8 +75,10 @@ vim.keymap.set("n", "<leader>us", function()
   print(vim.opt.spell:get() and "Spell ON" or "Spell OFF")
 end, { desc = "Toggle Spell Check" })
 
-vim.keymap.set("n", "<leader>i", "", { desc = "Spell (idiom) : spell check helpers" })
 vim.keymap.set("n", "<leader>ic", "z=", { desc = "Spell: suggest corrections" })
 vim.keymap.set("n", "<leader>in", "]s", { desc = "Spell: next misspelled word" })
 vim.keymap.set("n", "<leader>ip", "[s", { desc = "Spell: previous misspelled word" })
 vim.keymap.set("n", "<leader>ia", "zg", { desc = "Spell: add word to dictionary" })
+
+-- Keymaps groups
+require("config.keymaps-groups")
