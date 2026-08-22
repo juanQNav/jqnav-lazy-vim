@@ -1,0 +1,9 @@
+{
+  "MD013": {
+    "line_length": 500,
+    "code_blocks": false
+  },
+  "MD031": false,
+  "MD040": false,
+  "MD024": false
+}
