@@ -4,7 +4,9 @@ A personalized Neovim configuration built on
 [LazyVim](https://github.com/LazyVim/LazyVim), optimized for full-stack
 development, knowledge management, and AI-assisted workflows.
 
-![Dashboard](assets/dashboard.png)
+<p align="center">
+  <img src="./assets/dashboard.png" width="80%" alt="dashboard of the jqnav lazyvim"/>
+</p>
 
 ## Features
 

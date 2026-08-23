@@ -5,5 +5,8 @@
   },
   "MD031": false,
   "MD040": false,
-  "MD024": false
+  "MD024": false,
+  "MD033": {
+    "allowed_elements": ["img"]
+  }
 }
