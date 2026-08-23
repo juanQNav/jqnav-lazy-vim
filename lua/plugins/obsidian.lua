@@ -475,6 +475,19 @@ return {
         template = "note",
       },
 
+      -- CRITICAL: This is used by blink.cmp/obsidian.nvim completion
+      -- when creating notes from [[wikilinks]]. Without this, the plugin
+      -- uses its default ID generator which produces garbage like "MEDA".
+      note_id_func = function(title)
+        local suffix = ""
+        if title and title ~= "" then
+          suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
+        else
+          suffix = tostring(math.random(1000, 9999))
+        end
+        return tostring(os.time()) .. "-" .. suffix
+      end,
+
       frontmatter = {
         func = function(note)
           local out = {
