@@ -292,7 +292,8 @@ return {
         "<leader>oc",
         function()
           local line = vim.api.nvim_get_current_line()
-          local todo_text = line:match("^%- %[ %] #TODO:%s*(.+)$")
+          local todo_text = line:match("^%- %[ %] #TODO:%s*([^.]*)")
+          local rest_text = line:match("^%- %[ %] #TODO:%s*[^.]*([.].*)$")
 
           if not todo_text or todo_text == "" then
             vim.notify("No #TODO: found on current line", vim.log.levels.WARN)
@@ -317,10 +318,10 @@ return {
               return
             end
 
-            local function finalize()
+            local function create_wikilink()
               -- replace the TODO line with a checkbox + wikilink
               local link = "[[" .. note_id .. "|" .. title .. "]]"
-              vim.api.nvim_set_current_line("- [ ] " .. link)
+              vim.api.nvim_set_current_line("- [ ] #TODO:" .. link .. rest_text)
               vim.notify("✓ Note created from TODO: " .. title)
             end
 
@@ -328,6 +329,7 @@ return {
             -- TEMPLATE MODE
             -- =========================
             if choice == "Template" then
+              create_wikilink()
               local scan = require("plenary.scandir")
 
               local templates = scan.scan_dir(template_dir, {
@@ -376,13 +378,13 @@ return {
                 file:close()
 
                 vim.cmd("edit " .. note_path)
-                finalize()
               end)
 
             -- =========================
             -- DEFAULT MODE (ZETTELKASTEN)
             -- =========================
             else
+              create_wikilink()
               local yaml = {
                 "---",
                 "id: " .. note_id,
@@ -405,7 +407,6 @@ return {
               file:close()
 
               vim.cmd("edit " .. note_path)
-              finalize()
             end
           end)
         end,
