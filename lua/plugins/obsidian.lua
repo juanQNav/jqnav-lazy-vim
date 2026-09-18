@@ -389,118 +389,122 @@ return {
         function()
           local ctx = resolve_vault_context()
 
-          vim.ui.select({ "Con timestamp (zettelkasten)", "Sin timestamp (slug)", "Desde template" }, {
-            prompt = "¿Cómo quieres crear la nota?",
-          }, function(choice)
-            if not choice then
-              return
-            end
+          -- Step 1: Choose note type
+          vim.ui.select({ "Nota vacía", "Desde template" }, {
+            prompt = "¿Qué tipo de nota?",
+          }, function(type_choice)
+            if not type_choice then return end
 
-            local title = vim.fn.input("Note title: ")
-            if not title or title == "" then
-              return
-            end
+            -- Step 2: Choose ID strategy
+            vim.ui.select({ "Con timestamp (zettelkasten)", "Sin timestamp (slug)" }, {
+              prompt = "Formato del nombre:",
+            }, function(id_choice)
+              if not id_choice then return end
 
-            local id_strategy = choice == "Sin timestamp (slug)" and "slug" or "zettel"
-            local note_id = generate_note_id(title, id_strategy)
+              local id_strategy = id_choice == "Sin timestamp (slug)" and "slug" or "zettel"
 
-            -- =========================
-            -- TEMPLATE MODE
-            -- =========================
-            if choice == "Desde template" then
-              local scan = require("plenary.scandir")
+              -- Step 3: Ask for title
+              local title = vim.fn.input("Note title: ")
+              if not title or title == "" then return end
 
-              local templates = scan.scan_dir(ctx.template_dir, {
-                depth = 2,
-                add_dirs = false,
-              })
+              local note_id = generate_note_id(title, id_strategy)
 
-              if not templates or vim.tbl_isempty(templates) then
-                vim.notify("No templates found in " .. ctx.template_dir, vim.log.levels.ERROR)
-                return
-              end
+              -- =========================
+              -- TEMPLATE MODE
+              -- =========================
+              if type_choice == "Desde template" then
+                local scan = require("plenary.scandir")
 
-              local template_names = {}
-              local template_map = {}
+                local templates = scan.scan_dir(ctx.template_dir, {
+                  depth = 2,
+                  add_dirs = false,
+                })
 
-              for _, path in ipairs(templates) do
-                local name = path:gsub(vim.pesc(ctx.template_dir) .. "/", "")
-                template_names[#template_names + 1] = name
-                template_map[name] = path
-              end
-
-              vim.ui.select(template_names, {
-                prompt = "Selecciona template",
-              }, function(selected_template)
-                if not selected_template then
+                if not templates or vim.tbl_isempty(templates) then
+                  vim.notify("No templates found in " .. ctx.template_dir, vim.log.levels.ERROR)
                   return
                 end
 
+                local template_names = {}
+                local template_map = {}
+
+                for _, path in ipairs(templates) do
+                  local name = path:gsub(vim.pesc(ctx.template_dir) .. "/", "")
+                  template_names[#template_names + 1] = name
+                  template_map[name] = path
+                end
+
+                vim.ui.select(template_names, {
+                  prompt = "Selecciona template",
+                }, function(selected_template)
+                  if not selected_template then return end
+
+                  local note_path = ctx.notes_dir .. "/" .. note_id .. ".md"
+                  local template_path = template_map[selected_template]
+
+                  local content = table.concat(vim.fn.readfile(template_path), "\n")
+
+                  -- Template engine
+                  content = content:gsub("{%s*{%s*id%s*}%s*}", note_id)
+                  content = content:gsub("{%s*{%s*title%s*}%s*}", title)
+                  content = content:gsub("{%s*{%s*date%s*}%s*}", os.date("%Y-%m-%d"))
+
+                  local file = io.open(note_path, "w")
+                  if not file then
+                    vim.notify("Error creando nota", vim.log.levels.ERROR)
+                    return
+                  end
+
+                  file:write(content)
+                  file:close()
+
+                  vim.cmd("edit " .. note_path)
+                  vim.notify("✓ Created from template: " .. selected_template)
+                end)
+
+              -- =========================
+              -- EMPTY NOTE MODE
+              -- =========================
+              else
                 local note_path = ctx.notes_dir .. "/" .. note_id .. ".md"
-                local template_path = template_map[selected_template]
 
-                local content = table.concat(vim.fn.readfile(template_path), "\n")
-
-                -- Template engine
-                content = content:gsub("{%s*{%s*id%s*}%s*}", note_id)
-                content = content:gsub("{%s*{%s*title%s*}%s*}", title)
-                content = content:gsub("{%s*{%s*date%s*}%s*}", os.date("%Y-%m-%d"))
+                local yaml
+                if id_strategy == "slug" then
+                  yaml = {
+                    "---",
+                    "aliases:",
+                    "  - " .. title,
+                    "tags:",
+                    "---",
+                    "",
+                    "# " .. title,
+                    "",
+                  }
+                else
+                  yaml = {
+                    "---",
+                    "id: " .. note_id,
+                    "aliases:",
+                    "  - " .. title,
+                    "tags:",
+                    "---",
+                    "",
+                    "# " .. title,
+                    "",
+                  }
+                end
 
                 local file = io.open(note_path, "w")
-                if not file then
+                if file then
+                  file:write(table.concat(yaml, "\n"))
+                  file:close()
+                  vim.cmd("edit " .. note_path)
+                  vim.notify("✓ Note created: " .. note_id)
+                else
                   vim.notify("Error creando nota", vim.log.levels.ERROR)
-                  return
                 end
-
-                file:write(content)
-                file:close()
-
-                vim.cmd("edit " .. note_path)
-                vim.notify("✓ Created from template: " .. selected_template)
-              end)
-
-            -- =========================
-            -- MANUAL MODE
-            -- =========================
-            else
-              local note_path = ctx.notes_dir .. "/" .. note_id .. ".md"
-
-              local yaml
-              if id_strategy == "slug" then
-                yaml = {
-                  "---",
-                  "aliases:",
-                  "  - " .. title,
-                  "tags:",
-                  "---",
-                  "",
-                  "# " .. title,
-                  "",
-                }
-              else
-                yaml = {
-                  "---",
-                  "id: " .. note_id,
-                  "aliases:",
-                  "  - " .. title,
-                  "tags:",
-                  "---",
-                  "",
-                  "# " .. title,
-                  "",
-                }
               end
-
-              local file = io.open(note_path, "w")
-              if file then
-                file:write(table.concat(yaml, "\n"))
-                file:close()
-                vim.cmd("edit " .. note_path)
-                vim.notify("✓ Note created: " .. note_id)
-              else
-                vim.notify("Error creando nota", vim.log.levels.ERROR)
-              end
-            end
+            end)
           end)
         end,
         desc = "Obsidian New Note (vault-aware, id-strategy aware)",
@@ -658,67 +662,112 @@ return {
           local ctx = resolve_vault_context()
           local title = vim.trim(todo_text)
 
-          -- Ask for ID strategy first
-          vim.ui.select({ "Con timestamp (zettelkasten)", "Sin timestamp (slug)", "Desde template" }, {
-            prompt = "¿Cómo quieres crear la nota?",
-          }, function(choice)
-            if not choice then
-              return
-            end
+          -- Step 1: Choose note type
+          vim.ui.select({ "Nota vacía", "Desde template" }, {
+            prompt = "¿Qué tipo de nota?",
+          }, function(type_choice)
+            if not type_choice then return end
 
-            local id_strategy = choice == "Sin timestamp (slug)" and "slug" or "zettel"
-            local note_id = generate_note_id(title, id_strategy)
-            local note_path = ctx.notes_dir .. "/" .. note_id .. ".md"
+            -- Step 2: Choose ID strategy
+            vim.ui.select({ "Con timestamp (zettelkasten)", "Sin timestamp (slug)" }, {
+              prompt = "Formato del nombre:",
+            }, function(id_choice)
+              if not id_choice then return end
 
-            local function create_wikilink()
-              -- Replace the TODO line with a checkbox + wikilink
-              local link = "[[" .. note_id .. "|" .. title .. "]]"
-              vim.api.nvim_set_current_line("- [ ] #TODO:" .. link .. rest_text)
-              vim.notify("✓ Note created from TODO: " .. title)
-            end
+              local id_strategy = id_choice == "Sin timestamp (slug)" and "slug" or "zettel"
+              local note_id = generate_note_id(title, id_strategy)
+              local note_path = ctx.notes_dir .. "/" .. note_id .. ".md"
 
-            -- =========================
-            -- TEMPLATE MODE
-            -- =========================
-            if choice == "Desde template" then
-              create_wikilink()
-              local scan = require("plenary.scandir")
-
-              local templates = scan.scan_dir(ctx.template_dir, {
-                depth = 2,
-                add_dirs = false,
-              })
-
-              if not templates or vim.tbl_isempty(templates) then
-                vim.notify("No templates found in " .. ctx.template_dir, vim.log.levels.ERROR)
-                return
+              local function create_wikilink()
+                -- Replace the TODO line with a checkbox + wikilink
+                local link = "[[" .. note_id .. "|" .. title .. "]]"
+                vim.api.nvim_set_current_line("- [ ] #TODO:" .. link .. rest_text)
+                vim.notify("✓ Note created from TODO: " .. title)
               end
 
-              local template_names = {}
-              local template_map = {}
+              -- =========================
+              -- TEMPLATE MODE
+              -- =========================
+              if type_choice == "Desde template" then
+                create_wikilink()
+                local scan = require("plenary.scandir")
 
-              for _, path in ipairs(templates) do
-                local name = path:gsub(vim.pesc(ctx.template_dir) .. "/", "")
-                template_names[#template_names + 1] = name
-                template_map[name] = path
-              end
+                local templates = scan.scan_dir(ctx.template_dir, {
+                  depth = 2,
+                  add_dirs = false,
+                })
 
-              vim.ui.select(template_names, {
-                prompt = "Selecciona template",
-              }, function(selected_template)
-                if not selected_template then
+                if not templates or vim.tbl_isempty(templates) then
+                  vim.notify("No templates found in " .. ctx.template_dir, vim.log.levels.ERROR)
                   return
                 end
 
-                local template_path = template_map[selected_template]
+                local template_names = {}
+                local template_map = {}
 
-                -- Load template file
-                local content = table.concat(vim.fn.readfile(template_path), "\n")
+                for _, path in ipairs(templates) do
+                  local name = path:gsub(vim.pesc(ctx.template_dir) .. "/", "")
+                  template_names[#template_names + 1] = name
+                  template_map[name] = path
+                end
 
-                -- Template engine
-                content = content:gsub("{%s*{%s*id%s*}%s*}", note_id)
-                content = content:gsub("{%s*{%s*title%s*}%s*}", title)
-                content = content:gsub("{%s*{%s*date%s*}%s*}", os.date("%Y-%m-%d"))
+                vim.ui.select(template_names, {
+                  prompt = "Selecciona template",
+                }, function(selected_template)
+                  if not selected_template then return end
+
+                  local template_path = template_map[selected_template]
+
+                  -- Load template file
+                  local content = table.concat(vim.fn.readfile(template_path), "\n")
+
+                  -- Template engine
+                  content = content:gsub("{%s*{%s*id%s*}%s*}", note_id)
+                  content = content:gsub("{%s*{%s*title%s*}%s*}", title)
+                  content = content:gsub("{%s*{%s*date%s*}%s*}", os.date("%Y-%m-%d"))
+
+                  local file = io.open(note_path, "w")
+                  if not file then
+                    vim.notify("Error creating note", vim.log.levels.ERROR)
+                    return
+                  end
+
+                  file:write(content)
+                  file:close()
+
+                  vim.cmd("edit " .. note_path)
+                end)
+
+              -- =========================
+              -- EMPTY NOTE MODE
+              -- =========================
+              else
+                create_wikilink()
+                local yaml
+                if id_strategy == "slug" then
+                  yaml = {
+                    "---",
+                    "aliases:",
+                    "  - " .. title,
+                    "tags:",
+                    "---",
+                    "",
+                    "# " .. title,
+                    "",
+                  }
+                else
+                  yaml = {
+                    "---",
+                    "id: " .. note_id,
+                    "aliases:",
+                    "  - " .. title,
+                    "tags:",
+                    "---",
+                    "",
+                    "# " .. title,
+                    "",
+                  }
+                end
 
                 local file = io.open(note_path, "w")
                 if not file then
@@ -726,54 +775,12 @@ return {
                   return
                 end
 
-                file:write(content)
+                file:write(table.concat(yaml, "\n"))
                 file:close()
 
                 vim.cmd("edit " .. note_path)
-              end)
-
-            -- =========================
-            -- DEFAULT MODE
-            -- =========================
-            else
-              create_wikilink()
-              local yaml
-              if id_strategy == "slug" then
-                yaml = {
-                  "---",
-                  "aliases:",
-                  "  - " .. title,
-                  "tags:",
-                  "---",
-                  "",
-                  "# " .. title,
-                  "",
-                }
-              else
-                yaml = {
-                  "---",
-                  "id: " .. note_id,
-                  "aliases:",
-                  "  - " .. title,
-                  "tags:",
-                  "---",
-                  "",
-                  "# " .. title,
-                  "",
-                }
               end
-
-              local file = io.open(note_path, "w")
-              if not file then
-                vim.notify("Error creating note", vim.log.levels.ERROR)
-                return
-              end
-
-              file:write(table.concat(yaml, "\n"))
-              file:close()
-
-              vim.cmd("edit " .. note_path)
-            end
+            end)
           end)
         end,
         desc = "Obsidian TODO → note + link (vault-aware, id-strategy aware)",
