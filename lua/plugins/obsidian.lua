@@ -37,7 +37,11 @@ end
 local function write_vault_registry(vaults)
   local out = {}
   for _, v in ipairs(vaults) do
-    table.insert(out, { name = v.name, path = v.path })
+    local entry = { name = v.name, path = v.path }
+    if v.notes_subdir then entry.notes_subdir = v.notes_subdir end
+    if v.templates_subdir then entry.templates_subdir = v.templates_subdir end
+    if v.id_strategy then entry.id_strategy = v.id_strategy end
+    table.insert(out, entry)
   end
 
   local ok_json, json_str = pcall(vim.json.encode, out)
