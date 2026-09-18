@@ -18,11 +18,15 @@ local function read_vault_registry()
     return {}
   end
 
-  -- Validate each entry
+  -- Validate each entry and preserve optional vault-specific settings
   local vaults = {}
   for _, v in ipairs(parsed or {}) do
     if v.name and v.path then
-      table.insert(vaults, { name = v.name, path = vim.fn.expand(v.path) })
+      local entry = { name = v.name, path = vim.fn.expand(v.path) }
+      if v.notes_subdir then entry.notes_subdir = v.notes_subdir end
+      if v.templates_subdir then entry.templates_subdir = v.templates_subdir end
+      if v.id_strategy then entry.id_strategy = v.id_strategy end
+      table.insert(vaults, entry)
     end
   end
 
@@ -204,10 +208,14 @@ local function resolve_vault_context()
   if buf_path ~= "" then
     for _, ws in ipairs(vaults) do
       if buf_path:sub(1, #ws.path) == ws.path then
+        local notes_subdir = ws.notes_subdir or "limbus"
+        local templates_subdir = ws.templates_subdir or "templates"
+        local id_strategy = ws.id_strategy or "zettel"
         return {
           vault_path = ws.path,
-          notes_dir = ws.path .. "/limbus",
-          template_dir = ws.path .. "/templates",
+          notes_dir = ws.path .. "/" .. notes_subdir,
+          template_dir = ws.path .. "/" .. templates_subdir,
+          id_strategy = id_strategy,
         }
       end
     end
@@ -223,28 +231,43 @@ local function resolve_vault_context()
         vault_path = vault_path,
         notes_dir = vault_path .. "/limbus",
         template_dir = vault_path .. "/templates",
+        id_strategy = "zettel",
       }
     end
   end
 
   -- Fallback: first registered vault
   local ws = vaults[1]
+  local notes_subdir = ws.notes_subdir or "limbus"
+  local templates_subdir = ws.templates_subdir or "templates"
+  local id_strategy = ws.id_strategy or "zettel"
   return {
     vault_path = ws.path,
-    notes_dir = ws.path .. "/limbus",
-    template_dir = ws.path .. "/templates",
+    notes_dir = ws.path .. "/" .. notes_subdir,
+    template_dir = ws.path .. "/" .. templates_subdir,
+    id_strategy = id_strategy,
   }
 end
 
--- Shared ID generator
-local function note_id_func(title)
+-- Shared ID generator with strategy support
+local function generate_note_id(title, strategy)
   local suffix = ""
   if title and title ~= "" then
     suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
   else
     suffix = tostring(math.random(1000, 9999))
   end
+
+  if strategy == "slug" then
+    return suffix
+  end
+  -- default: zettel (timestamp + slug)
   return tostring(os.time()) .. "-" .. suffix
+end
+
+-- Legacy wrapper for obsidian.nvim opts
+local function note_id_func(title)
+  return generate_note_id(title, "zettel")
 end
 
 return {
@@ -267,14 +290,14 @@ return {
       { "<leader>od", "<cmd>Obsidian toggle_checkbox<cr>", desc = "Obsidian Toggle Checkbox", ft = "markdown" },
 
       -- =========================
-      -- NEW NOTE FLOW (VAULT-AGNOSTIC)
+      -- NEW NOTE FLOW (VAULT-AGNOSTIC, ID-STRATEGY AWARE)
       -- =========================
       {
         "<leader>on",
         function()
           local ctx = resolve_vault_context()
 
-          vim.ui.select({ "Default (Zettelkasten)", "Template" }, {
+          vim.ui.select({ "Con timestamp (zettelkasten)", "Sin timestamp (slug)", "Desde template" }, {
             prompt = "¿Cómo quieres crear la nota?",
           }, function(choice)
             if not choice then
@@ -286,12 +309,13 @@ return {
               return
             end
 
-            local note_id = note_id_func(title)
+            local id_strategy = choice == "Sin timestamp (slug)" and "slug" or "zettel"
+            local note_id = generate_note_id(title, id_strategy)
 
             -- =========================
             -- TEMPLATE MODE
             -- =========================
-            if choice == "Template" then
+            if choice == "Desde template" then
               local scan = require("plenary.scandir")
 
               local templates = scan.scan_dir(ctx.template_dir, {
@@ -344,36 +368,50 @@ return {
               end)
 
             -- =========================
-            -- MANUAL MODE (ZETTELKASTEN)
+            -- MANUAL MODE
             -- =========================
             else
               local note_path = ctx.notes_dir .. "/" .. note_id .. ".md"
 
-              local yaml = {
-                "---",
-                "id: " .. note_id,
-                "aliases:",
-                "  - " .. title,
-                "tags:",
-                "---",
-                "",
-                "# " .. title,
-                "",
-              }
+              local yaml
+              if id_strategy == "slug" then
+                yaml = {
+                  "---",
+                  "aliases:",
+                  "  - " .. title,
+                  "tags:",
+                  "---",
+                  "",
+                  "# " .. title,
+                  "",
+                }
+              else
+                yaml = {
+                  "---",
+                  "id: " .. note_id,
+                  "aliases:",
+                  "  - " .. title,
+                  "tags:",
+                  "---",
+                  "",
+                  "# " .. title,
+                  "",
+                }
+              end
 
               local file = io.open(note_path, "w")
               if file then
                 file:write(table.concat(yaml, "\n"))
                 file:close()
                 vim.cmd("edit " .. note_path)
-                vim.notify("✓ Zettelkasten note created")
+                vim.notify("✓ Note created: " .. note_id)
               else
                 vim.notify("Error creando nota", vim.log.levels.ERROR)
               end
             end
           end)
         end,
-        desc = "Obsidian New Note (vault-aware, template aware)",
+        desc = "Obsidian New Note (vault-aware, id-strategy aware)",
       },
 
       -- =========================
@@ -511,7 +549,7 @@ return {
       },
 
       -- =========================
-      -- TODO → ZETTELKASTEN NOTE + LINK (VAULT-AGNOSTIC)
+      -- TODO → NOTE + LINK (VAULT-AGNOSTIC, ID-STRATEGY AWARE)
       -- =========================
       {
         "<leader>oc",
@@ -527,15 +565,18 @@ return {
 
           local ctx = resolve_vault_context()
           local title = vim.trim(todo_text)
-          local note_id = note_id_func(title)
-          local note_path = ctx.notes_dir .. "/" .. note_id .. ".md"
 
-          vim.ui.select({ "Default (Zettelkasten)", "Template" }, {
+          -- Ask for ID strategy first
+          vim.ui.select({ "Con timestamp (zettelkasten)", "Sin timestamp (slug)", "Desde template" }, {
             prompt = "¿Cómo quieres crear la nota?",
           }, function(choice)
             if not choice then
               return
             end
+
+            local id_strategy = choice == "Sin timestamp (slug)" and "slug" or "zettel"
+            local note_id = generate_note_id(title, id_strategy)
+            local note_path = ctx.notes_dir .. "/" .. note_id .. ".md"
 
             local function create_wikilink()
               -- Replace the TODO line with a checkbox + wikilink
@@ -547,7 +588,7 @@ return {
             -- =========================
             -- TEMPLATE MODE
             -- =========================
-            if choice == "Template" then
+            if choice == "Desde template" then
               create_wikilink()
               local scan = require("plenary.scandir")
 
@@ -600,21 +641,35 @@ return {
               end)
 
             -- =========================
-            -- DEFAULT MODE (ZETTELKASTEN)
+            -- DEFAULT MODE
             -- =========================
             else
               create_wikilink()
-              local yaml = {
-                "---",
-                "id: " .. note_id,
-                "aliases:",
-                "  - " .. title,
-                "tags:",
-                "---",
-                "",
-                "# " .. title,
-                "",
-              }
+              local yaml
+              if id_strategy == "slug" then
+                yaml = {
+                  "---",
+                  "aliases:",
+                  "  - " .. title,
+                  "tags:",
+                  "---",
+                  "",
+                  "# " .. title,
+                  "",
+                }
+              else
+                yaml = {
+                  "---",
+                  "id: " .. note_id,
+                  "aliases:",
+                  "  - " .. title,
+                  "tags:",
+                  "---",
+                  "",
+                  "# " .. title,
+                  "",
+                }
+              end
 
               local file = io.open(note_path, "w")
               if not file then
@@ -629,7 +684,7 @@ return {
             end
           end)
         end,
-        desc = "Obsidian TODO → Zettelkasten note + link (vault-aware)",
+        desc = "Obsidian TODO → note + link (vault-aware, id-strategy aware)",
         ft = "markdown",
       },
 
