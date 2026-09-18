@@ -53,6 +53,16 @@ local function write_vault_registry(vaults)
   file:write(json_str)
   file:close()
 
+  -- Pretty-print with jq if available
+  local formatted = vim.fn.system("jq '.' " .. vim.fn.shellescape(tmp))
+  if vim.v.shell_error == 0 then
+    local f = io.open(tmp, "w")
+    if f then
+      f:write(formatted)
+      f:close()
+    end
+  end
+
   vim.loop.fs_rename(tmp, VAULT_REGISTRY_PATH)
 end
 
@@ -87,30 +97,92 @@ local function register_new_vault()
 
       path = vim.fn.expand(vim.trim(path))
 
-      -- Create vault structure
-      local obsidian_dir = path .. "/.obsidian"
-      local ok = pcall(vim.fn.mkdir, path, "p")
-      if not ok then
-        vim.notify("[obsidian] Cannot create directory: " .. path, vim.log.levels.ERROR)
-        return
+      -- Check if path is already registered by another name
+      for _, v in ipairs(vaults) do
+        if v.path == path then
+          vim.notify("[obsidian] Path '" .. path .. "' already registered as '" .. v.name .. "'", vim.log.levels.WARN)
+          return
+        end
       end
 
-      ok = pcall(vim.fn.mkdir, obsidian_dir)
-      if not ok then
-        vim.notify("[obsidian] Cannot create .obsidian directory", vim.log.levels.WARN)
+      -- Check if path already exists on disk
+      local dir_exists = vim.fn.isdirectory(path) == 1
+      if dir_exists then
+        local has_obsidian = vim.fn.isdirectory(path .. "/.obsidian") == 1
+        if not has_obsidian then
+          vim.notify("[obsidian] Directory '" .. path .. "' exists but is not an Obsidian vault. Pick an empty or non-existent path to create a new one.", vim.log.levels.ERROR)
+          return
+        end
+        -- Existing Obsidian vault — adopt it
+        vim.notify("[obsidian] Adopting existing vault at " .. path, vim.log.levels.INFO)
+      else
+        -- Create folder structure
+        local obsidian_dir = path .. "/.obsidian"
+        local ok = pcall(vim.fn.mkdir, path, "p")
+        if not ok then
+          vim.notify("[obsidian] Cannot create directory: " .. path, vim.log.levels.ERROR)
+          return
+        end
+
+        ok = pcall(vim.fn.mkdir, obsidian_dir)
+        if not ok then
+          vim.notify("[obsidian] Cannot create .obsidian directory", vim.log.levels.WARN)
+        end
       end
 
       -- Register in JSON
       table.insert(vaults, { name = name, path = path })
       write_vault_registry(vaults)
 
-      vim.notify("[obsidian] Vault '" .. name .. "' created at " .. path)
+      if dir_exists then
+        vim.notify("[obsidian] Vault '" .. name .. "' registered at " .. path)
+      else
+        vim.notify("[obsidian] Vault '" .. name .. "' created at " .. path)
+      end
     end)
   end)
 end
 
 -- Register command
 vim.api.nvim_create_user_command("ObsidianVaultAdd", register_new_vault, { nargs = 0 })
+
+-- =========================
+-- VAULT REMOVAL COMMAND
+-- =========================
+local function unregister_vault()
+  local vaults = read_vault_registry()
+
+  if vim.tbl_isempty(vaults) then
+    vim.notify("[obsidian] No registered vaults to remove", vim.log.levels.WARN)
+    return
+  end
+
+  local labels = {}
+  for _, v in ipairs(vaults) do
+    table.insert(labels, v.name .. "  (" .. v.path .. ")")
+  end
+
+  vim.ui.select(labels, {
+    prompt = "Remove vault (folder will NOT be deleted):",
+  }, function(choice)
+    if not choice then
+      return
+    end
+
+    -- Find matching vault index
+    for i, label in ipairs(labels) do
+      if label == choice then
+        local removed = vaults[i]
+        table.remove(vaults, i)
+        write_vault_registry(vaults)
+        vim.notify("[obsidian] Vault '" .. removed.name .. "' removed from registry")
+        return
+      end
+    end
+  end)
+end
+
+vim.api.nvim_create_user_command("ObsidianVaultRemove", unregister_vault, { nargs = 0 })
 
 -- Generate lazy-load events for all registered vaults
 local function vault_events()
@@ -145,8 +217,8 @@ local function resolve_vault_context()
   local ok, obsidian = pcall(require, "obsidian")
   if ok then
     local client = obsidian.get_client()
-    if client and client.dir then
-      local vault_path = tostring(client.dir)
+    if client and client["dir"] then
+      local vault_path = tostring(client["dir"])
       return {
         vault_path = vault_path,
         notes_dir = vault_path .. "/limbus",
@@ -190,6 +262,7 @@ return {
       { "<leader>os", "<cmd>Obsidian search<cr>", desc = "Obsidian Search" },
       { "<leader>oa", "<cmd>Obsidian open<cr>", desc = "Obsidian Open Vault" },
       { "<leader>ov", "<cmd>ObsidianVaultAdd<cr>", desc = "Obsidian Add Vault" },
+      { "<leader>oD", "<cmd>ObsidianVaultRemove<cr>", desc = "Obsidian Remove Vault" },
       { "<leader>of", "<cmd>Obsidian follow_link<cr>", desc = "Obsidian Follow Link", ft = "markdown" },
       { "<leader>od", "<cmd>Obsidian toggle_checkbox<cr>", desc = "Obsidian Toggle Checkbox", ft = "markdown" },
 
