@@ -853,7 +853,6 @@ return {
       },
 
       templates = {
-        subdir = "templates",
         date_format = "%Y-%m-%d-%a",
         gtime_format = "%H:%M",
         tags = "",
