@@ -188,6 +188,93 @@ end
 
 vim.api.nvim_create_user_command("ObsidianVaultRemove", unregister_vault, { nargs = 0 })
 
+-- =========================
+-- VAULT EDIT COMMAND
+-- =========================
+local function edit_vault()
+  local vaults = read_vault_registry()
+
+  if vim.tbl_isempty(vaults) then
+    vim.notify("[obsidian] No registered vaults to edit", vim.log.levels.WARN)
+    return
+  end
+
+  local labels = {}
+  for _, v in ipairs(vaults) do
+    table.insert(labels, v.name .. "  (" .. v.path .. ")")
+  end
+
+  vim.ui.select(labels, {
+    prompt = "Edit vault settings:",
+  }, function(choice)
+    if not choice then
+      return
+    end
+
+    local idx = nil
+    for i, label in ipairs(labels) do
+      if label == choice then
+        idx = i
+        break
+      end
+    end
+    if not idx then return end
+
+    local v = vaults[idx]
+
+    -- Show current values
+    local current_notes = v.notes_subdir or "limbus"
+    local current_templates = v.templates_subdir or "templates"
+    local current_id = v.id_strategy or "zettel"
+
+    vim.notify(
+      "Current: notes=" .. current_notes .. " | templates=" .. current_templates .. " | id=" .. current_id,
+      vim.log.levels.INFO
+    )
+
+    -- Ask for notes_subdir
+    vim.ui.input({
+      prompt = "Notes subdir (current: " .. current_notes .. "):",
+      default = current_notes,
+    }, function(notes_subdir)
+      if not notes_subdir then return end
+      v.notes_subdir = notes_subdir ~= "limbus" and notes_subdir or nil
+
+      -- Ask for templates_subdir
+      vim.ui.input({
+        prompt = "Templates subdir (current: " .. current_templates .. "):",
+        default = current_templates,
+      }, function(templates_subdir)
+        if not templates_subdir then return end
+        v.templates_subdir = templates_subdir ~= "templates" and templates_subdir or nil
+
+        -- Ask for id_strategy
+        vim.ui.select({ "zettel (timestamp-slug)", "slug (slug only)" }, {
+          prompt = "ID strategy:",
+          default = current_id == "zettel" and 1 or 2,
+        }, function(id_choice)
+          if not id_choice then return end
+          local strategy = id_choice == "zettel (timestamp-slug)" and "zettel" or "slug"
+          v.id_strategy = strategy ~= "zettel" and strategy or nil
+
+          write_vault_registry(vaults)
+          vim.notify(
+            "[obsidian] Vault '" .. v.name .. "' updated: notes="
+              .. (v.notes_subdir or "limbus")
+              .. " | templates="
+              .. (v.templates_subdir or "templates")
+              .. " | id="
+              .. (v.id_strategy or "zettel"),
+            vim.log.levels.INFO
+          )
+        end)
+      end)
+    end)
+  end)
+end
+
+vim.api.nvim_create_user_command("ObsidianVaultEdit", edit_vault, { nargs = 0 })
+
 -- Generate lazy-load events for all registered vaults
 local function vault_events()
   local events = {}
@@ -285,6 +372,7 @@ return {
       { "<leader>os", "<cmd>Obsidian search<cr>", desc = "Obsidian Search" },
       { "<leader>oa", "<cmd>Obsidian open<cr>", desc = "Obsidian Open Vault" },
       { "<leader>ov", "<cmd>ObsidianVaultAdd<cr>", desc = "Obsidian Add Vault" },
+      { "<leader>oe", "<cmd>ObsidianVaultEdit<cr>", desc = "Obsidian Edit Vault" },
       { "<leader>oD", "<cmd>ObsidianVaultRemove<cr>", desc = "Obsidian Remove Vault" },
       { "<leader>of", "<cmd>Obsidian follow_link<cr>", desc = "Obsidian Follow Link", ft = "markdown" },
       { "<leader>od", "<cmd>Obsidian toggle_checkbox<cr>", desc = "Obsidian Toggle Checkbox", ft = "markdown" },
@@ -728,9 +816,6 @@ return {
         create_new = true,
         order = { " ", "x", "!", ">", "~" },
       },
-
-      notes_subdir = "limbus",
-      new_notes_location = "limbus",
 
       attachments = {
         folder = "files",
